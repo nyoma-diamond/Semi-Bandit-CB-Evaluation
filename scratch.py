@@ -97,4 +97,4 @@ if __name__ == '__main__':
                                    total=len(B_payoff_mats)))
 
     B_payoff_paths = np.concatenate(B_payoff_paths)
-    print('Expected payoff for player A:', B_payoff_paths.sum()/len(B_payoff_paths))
+    print('Expected payoff for player B:', B_payoff_paths.sum()/len(B_payoff_paths))
