@@ -81,7 +81,7 @@ if __name__ == '__main__':
                                                                            win_draws=False,
                                                                            divide=False),
                                                                    B_possible_decisions,
-                                                                   chunksize=16)):
+                                                                   chunksize=32)):
                 A_expected_payoff += partial_payoff
                 pbar.update(len(A_decisions))
                 pbar.set_postfix_str(f'Expected payoff: {A_expected_payoff / (len(A_decisions)*(i+1))}')
@@ -99,7 +99,7 @@ if __name__ == '__main__':
                                                                            win_draws=False,
                                                                            divide=False),
                                                                    A_possible_decisions,
-                                                                   chunksize=16)):
+                                                                   chunksize=32)):
                 B_expected_payoff += partial_payoff
                 pbar.update(len(B_decisions))
                 pbar.set_postfix_str(f'Expected payoff: {B_expected_payoff / (len(B_decisions)*(i+1))}')
