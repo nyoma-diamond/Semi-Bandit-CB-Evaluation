@@ -1,5 +1,4 @@
 import pandas as pd
-import sys
 
 def coordinate_to_index(coordinate: tuple[int,int], battlefields: int, N: int) -> int:
     """
