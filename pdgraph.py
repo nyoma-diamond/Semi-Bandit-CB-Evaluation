@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 def coordinate_to_index(coordinate: tuple[int,int], battlefields: int, N: int) -> int:
@@ -117,16 +118,15 @@ def find_paths_allocations(adj_mat: pd.DataFrame, dest: tuple[int, int]):
     return find_subpaths_allocations(adj_mat, (0, 0), dest, {})
 
 
-def build_payoff_matrix(opponent_decision: list[int], adj_mat: pd.DataFrame, win_draws=False):
-    payoff_mat = adj_mat.copy()
-
-    for frm in adj_mat.columns:
-        for to in adj_mat.loc[frm[0]+1].index:
-            if to < frm[1]:
-                continue
-            if win_draws:
-                payoff_mat.at[(frm[0]+1, to), frm] = adj_mat[frm][(frm[0]+1, to)] >= opponent_decision[frm[0]]
-            else:
-                payoff_mat.at[(frm[0]+1, to), frm] = adj_mat[frm][(frm[0]+1, to)] > opponent_decision[frm[0]]
-
-    return payoff_mat
+def compute_expected_payoff(decision, opp_decisions, win_draws=False, divide=True):
+    """
+    Compute the expected payoff for a given decision
+    :param decision: decision to compute the expected payoff of
+    :param opp_decisions: all possible decisions the opponent can take
+    :param win_draws: whether the player wins draws
+    :param divide: whether to divide the total available payoff by the number of possibilities (expected value)
+    :return: the expected payoff (total available payoff if divide is False)
+    """
+    compare = np.greater_equal if win_draws else np.greater
+    total = sum(compare(dec, decision).sum() for dec in opp_decisions)
+    return total/len(opp_decisions) if divide else total

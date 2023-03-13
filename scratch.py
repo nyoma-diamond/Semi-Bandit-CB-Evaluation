@@ -1,11 +1,12 @@
 import random
 import multiprocessing as mp
 from functools import partial
+from time import sleep
 
 import numpy as np
 from tqdm import tqdm
 
-from pdgraph import build_adjacency_matrix, find_paths_allocations, build_payoff_matrix
+from pdgraph import build_adjacency_matrix, find_paths_allocations, compute_expected_payoff
 
 
 if __name__ == '__main__':
@@ -38,6 +39,9 @@ if __name__ == '__main__':
     A_result = np.greater(A_play, B_play)
     B_result = np.invert(A_result)
 
+    print('A payoff:', A_result.sum())
+    print('B payoff:', B_result.sum())
+
     print('Computing bounds...')
 
     A_bounds, B_bounds = [], []
@@ -64,37 +68,42 @@ if __name__ == '__main__':
     A_possible_decisions = find_paths_allocations(pruned_A, d_A)
     B_possible_decisions = find_paths_allocations(pruned_B, d_B)
 
-    print('Computing payoff graphs for player A...')
-    with mp.Pool() as pool:
-        A_payoff_mats = list(tqdm(pool.imap_unordered(partial(build_payoff_matrix, adj_mat=adj_mat_A, win_draws=False),
-                                                      B_possible_decisions,
-                                                      chunksize=16),
-                                  total=len(B_possible_decisions)))
 
-    print('Computing payoff paths for player A...')
-    with mp.Pool() as pool:
-        A_payoff_paths = list(tqdm(pool.imap_unordered(partial(find_paths_allocations, dest=d_A),
-                                                       A_payoff_mats,
-                                                       chunksize=1),
-                                   total=len(A_payoff_mats)))
-
-    A_payoff_paths = np.concatenate(A_payoff_paths)
-    print('Expected payoff for player A:', A_payoff_paths.sum()/len(A_payoff_paths))
+    A_expected_payoff = 0
+    B_expected_payoff = 0
 
 
-    print('Computing payoff graphs for player B...')
-    with mp.Pool() as pool:
-        B_payoff_mats = list(tqdm(pool.imap_unordered(partial(build_payoff_matrix, adj_mat=adj_mat_B, win_draws=False),
-                                                      A_possible_decisions,
-                                                      chunksize=16),
-                                  total=len(A_possible_decisions)))
+    print('Computing expected payoff for player A...')
+    with tqdm(total=len(A_decisions)*len(B_possible_decisions), unit_scale=True) as pbar:
+        with mp.Pool() as pool:
+            for i, partial_payoff in enumerate(pool.imap_unordered(partial(compute_expected_payoff,
+                                                                           opp_decisions=A_decisions,
+                                                                           win_draws=False,
+                                                                           divide=False),
+                                                                   B_possible_decisions,
+                                                                   chunksize=16)):
+                A_expected_payoff += partial_payoff
+                pbar.update(len(A_decisions))
+                pbar.set_postfix_str(f'Expected payoff: {A_expected_payoff / (len(A_decisions)*(i+1))}')
 
-    print('Computing payoff paths for player B...')
-    with mp.Pool() as pool:
-        B_payoff_paths = list(tqdm(pool.imap_unordered(partial(find_paths_allocations, dest=d_B),
-                                                       B_payoff_mats,
-                                                       chunksize=1),
-                                   total=len(B_payoff_mats)))
+    A_expected_payoff /= (len(A_decisions)*len(B_possible_decisions))
+    sleep(0.1) # fudge to make sure printout doesn't get messed up
+    print('Expected payoff for player A:', A_expected_payoff)
 
-    B_payoff_paths = np.concatenate(B_payoff_paths)
-    print('Expected payoff for player B:', B_payoff_paths.sum()/len(B_payoff_paths))
+
+    print('Computing expected payoff for player B...')
+    with tqdm(total=len(B_decisions)*len(A_possible_decisions), unit_scale=True) as pbar:
+        with mp.Pool() as pool:
+            for i, partial_payoff in enumerate(pool.imap_unordered(partial(compute_expected_payoff,
+                                                                           opp_decisions=B_decisions,
+                                                                           win_draws=False,
+                                                                           divide=False),
+                                                                   A_possible_decisions,
+                                                                   chunksize=16)):
+                B_expected_payoff += partial_payoff
+                pbar.update(len(B_decisions))
+                pbar.set_postfix_str(f'Expected payoff: {B_expected_payoff / (len(B_decisions)*(i+1))}')
+
+    B_expected_payoff /= (len(B_decisions)*len(A_possible_decisions))
+    sleep(0.1) # fudge to make sure printout doesn't get messed up
+    print('Expected payoff for player B:', B_expected_payoff)
