@@ -67,14 +67,34 @@ if __name__ == '__main__':
     print('Computing payoff graphs for player A...')
     with mp.Pool() as pool:
         A_payoff_mats = list(tqdm(pool.imap_unordered(partial(build_payoff_matrix, adj_mat=adj_mat_A, win_draws=False),
-                                                      B_possible_decisions),
+                                                      B_possible_decisions,
+                                                      chunksize=16),
                                   total=len(B_possible_decisions)))
 
     print('Computing payoff paths for player A...')
     with mp.Pool() as pool:
         A_payoff_paths = list(tqdm(pool.imap_unordered(partial(find_paths_allocations, dest=d_A),
-                                                       A_payoff_mats),
+                                                       A_payoff_mats,
+                                                       chunksize=1),
                                    total=len(A_payoff_mats)))
 
     A_payoff_paths = np.concatenate(A_payoff_paths)
     print('Expected payoff for player A:', A_payoff_paths.sum()/len(A_payoff_paths))
+
+
+    print('Computing payoff graphs for player B...')
+    with mp.Pool() as pool:
+        B_payoff_mats = list(tqdm(pool.imap_unordered(partial(build_payoff_matrix, adj_mat=adj_mat_B, win_draws=False),
+                                                      A_possible_decisions,
+                                                      chunksize=16),
+                                  total=len(A_possible_decisions)))
+
+    print('Computing payoff paths for player B...')
+    with mp.Pool() as pool:
+        B_payoff_paths = list(tqdm(pool.imap_unordered(partial(find_paths_allocations, dest=d_B),
+                                                       B_payoff_mats,
+                                                       chunksize=1),
+                                   total=len(B_payoff_mats)))
+
+    B_payoff_paths = np.concatenate(B_payoff_paths)
+    print('Expected payoff for player A:', B_payoff_paths.sum()/len(B_payoff_paths))
