@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 def coordinate_to_index(coordinate: tuple[int,int], battlefields: int, N: int) -> int:
     """
@@ -35,61 +34,79 @@ def index_to_coordinate(index: int, battlefields: int, N: int) -> tuple[int,int]
     return (index+N) // (N+1), (index-1) % (N+1)
 
 
-def build_adjacency_matrix(battlefields: int, N: int, bounds: list[tuple[int,int]] = None) -> pd.DataFrame:
+def get_child_indices(node: int, battlefields: int, N: int) -> tuple[int,int]:
     """
-    Creates DataFrame representing the adjacency matrix for possible allocations/decisions for a player
+    get the indices of the children of the provided node
+    :param node: node to get children of
+    :param battlefields: number of battlefields
+    :param N: number of resources
+    :return: index of first child, 1+index of last child
+    """
+    node_coord = index_to_coordinate(node, battlefields, N)
+
+    children_end = coordinate_to_index((node_coord[0]+1, N), battlefields, N) + 1
+
+    if node_coord[0] < battlefields-1:
+        children_start = coordinate_to_index((node_coord[0]+1, node_coord[1]), battlefields, N)
+    else:
+        children_start = (battlefields-1) * (N+1) + 1
+
+    return children_start, children_end
+
+
+
+def build_adjacency_matrix(battlefields: int, N: int, bounds: list[tuple[int,int]] = None) -> np.ndarray:
+    """
+    Creates adjacency matrix for possible allocations/decisions for a player
+    :param battlefields: the number of battlefields in the game
     :param N: the number of resources available to the player
     :param bounds: list of lower and upper bounds for possible allocations
-    :return: Adjacency matrix (DataFrame) for graph representing possible allocations/decisions of style mat[from][to]
+    :return: Adjacency matrix for graph representing possible allocations/decisions of style mat[from][to]
     """
-    adj_mat = pd.DataFrame(-1,
-                           index=pd.MultiIndex.from_tuples([index_to_coordinate(i, battlefields, N) for i in range(1, (battlefields-1) * (N+1) + 2)], names=['battlefield', 'resources used']),
-                           columns=pd.MultiIndex.from_tuples([index_to_coordinate(i, battlefields, N) for i in range((battlefields-1) * (N+1) + 1)], names=['battlefield', 'resources used']))
+    adj_mat = np.full(((battlefields-1) * (N+1) + 2, (battlefields-1) * (N+1) + 2), -1, dtype=int)
 
     if bounds is None:
         bounds = [(0,N)]*battlefields
 
-    for frm in adj_mat.columns:
-        for to in adj_mat.loc[frm[0]+1].index:
-            if to < frm[1]:
-                continue
-            allocation = to - frm[1]
-            if bounds[frm[0]][0] <= allocation <= bounds[frm[0]][1]:
-                adj_mat.at[(frm[0]+1, to), frm] = allocation
+
+    for frm_i in range(adj_mat.shape[0]-1): # can skip last node because it's a dead end
+        to_start, to_end = get_child_indices(frm_i, battlefields, N)
+
+        if to_end == adj_mat.shape[1]:
+            allocations = np.asarray([adj_mat.shape[0]-frm_i-2])
+        else:
+            allocations = np.arange(to_end-to_start)
+
+        frm_coord = index_to_coordinate(frm_i, battlefields, N)
+
+        bound = bounds[frm_coord[0]]
+        allocations[(bound[0] > allocations) | (allocations > bound[1])] = -1
+
+        adj_mat[frm_i, to_start:to_end] = allocations
 
     return adj_mat
 
 
-def find_subpaths(adj_mat: pd.DataFrame, node: tuple[int, int], dest: tuple[int, int],
-                  visited: dict[tuple[int, int], list[list[tuple, tuple]]]):
+def prune_dead_ends(adj_mat: np.ndarray):
     """
-    Find all paths (subpaths) between the provided nodes in the provided DAG
-    :param node: the starting node
-    :param dest: the destination node
-    :param visited: dictionary of all subpaths from nodes already visited
-    :param adj_mat: adjacency matrix representing the DAG being searched
-    :return: all paths (subpaths) between the provided nodes
+    Removes outgoing edges from all nodes that cannot reach the final node
+    :param adj_mat: adjacency matrix representing the graph to prune
+    :return: the pruned adjacency matrix
     """
-    if node not in visited.keys():
-        visited[node] = [[node] + subpath
-                         for child in adj_mat[adj_mat[node] != -1].index
-                         for subpath in find_subpaths(adj_mat, child, dest, visited)]
+    adj_mat = adj_mat.copy()
 
-    return visited[node]
+    for i in range(adj_mat.shape[0]-2, -1, -1): # need -2 instead of -1 because final node never has any children
+        if (adj_mat[i]==-1).all():
+            adj_mat[:,i] = -1
 
-
-def find_paths(adj_mat: pd.DataFrame, dest: tuple[int, int]):
-    """
-    Find all paths through the provided DAG
-    :param dest: the destination node
-    :param adj_mat: adjacency matrix representing the DAG being searched
-    :return: all paths through the DAG
-    """
-    return find_subpaths(adj_mat, (0, 0), dest, {dest: [[dest]]})
+    return adj_mat
 
 
-def find_subpaths_allocations(adj_mat: pd.DataFrame, node: tuple[int, int], dest: tuple[int, int],
-                              visited: dict[tuple[int, int], list[list[int]]]):
+
+
+
+def find_subpaths_allocations(adj_mat: np.ndarray, node: int, dest: int,
+                              visited: dict[int, list[list[int]]], battlefields: int, N: int):
     """
     Find all paths (partial allocations) between the provided nodes in the provided DAG, represented by their corresponding resource allocations
     :param node: the starting node
@@ -100,22 +117,25 @@ def find_subpaths_allocations(adj_mat: pd.DataFrame, node: tuple[int, int], dest
     """
     if node == dest:
         return [[]]
-    if node not in visited.keys():
-        visited[node] = [[adj_mat[node][child]] + subpath
-                         for child in adj_mat[adj_mat[node] != -1].index
-                         for subpath in find_subpaths_allocations(adj_mat, child, dest, visited)]
+    elif node not in visited.keys():
+        children_start, children_end = get_child_indices(node, battlefields, N)
+
+        visited[node] = [[adj_mat[node, child]] + subpath
+                         for child in range(children_start, children_end)
+                         if adj_mat[node, child] != -1
+                         for subpath in find_subpaths_allocations(adj_mat, child, dest, visited, battlefields, N)]
 
     return visited[node]
 
 
-def find_paths_allocations(adj_mat: pd.DataFrame, dest: tuple[int, int]):
+def find_paths_allocations(adj_mat: np.ndarray, dest: int, battlefields: int, N: int):
     """
     Find all possible paths (decisions) through the provided DAG
     :param dest: the destination node
     :param adj_mat: adjacency matrix representing the DAG being searched
     :return: all possible allocations (paths through the DAG)
     """
-    return find_subpaths_allocations(adj_mat, (0, 0), dest, {})
+    return find_subpaths_allocations(adj_mat, 0, dest, {}, battlefields, N)
 
 
 def compute_expected_payoff(decision, opp_decisions, win_draws=False, divide=True):
