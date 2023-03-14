@@ -1,12 +1,13 @@
-import random
+from random import randint
 import multiprocessing as mp
 from functools import partial
 from time import sleep
+from math import comb
 
 import numpy as np
 from tqdm import tqdm
 
-from pdgraph import build_adjacency_matrix, find_paths_allocations, compute_expected_payoff, coordinate_to_index, prune_dead_ends
+from pdgraph import build_adjacency_matrix, find_paths_allocations, compute_expected_payoff, coordinate_to_index, prune_dead_ends, build_allocations, allocation_by_id
 
 
 if __name__ == '__main__':
@@ -27,20 +28,27 @@ if __name__ == '__main__':
 
     print('Finding all possible decisions...')
 
+    # A_decisions = build_allocations(battlefields, N_A)
     A_decisions = find_paths_allocations(adj_mat_A, d_A, battlefields, N_A)
-    print('A decisions:', len(A_decisions))
+    A_num_decisions = comb(battlefields+N_A-1, battlefields-1)
+    print('A decisions:', A_num_decisions)
 
+    # B_decisions = build_allocations(battlefields, N_B)
     B_decisions = find_paths_allocations(adj_mat_B, d_B, battlefields, N_B)
-    print('B decisions:', len(B_decisions))
+    B_num_decisions = comb(battlefields+N_B-1, battlefields-1)
+    print('B decisions:', B_num_decisions)
 
-    A_play = np.asarray(random.choice(A_decisions))
-    B_play = np.asarray(random.choice(B_decisions))
+    A_play = np.asarray(allocation_by_id(randint(0, A_num_decisions-1), battlefields, N_A))
+    B_play = np.asarray(allocation_by_id(randint(0, B_num_decisions-1), battlefields, N_B))
 
     print('A allocation:', A_play)
     print('B allocation:', B_play)
 
     A_result = np.greater(A_play, B_play)
     B_result = np.invert(A_result)
+
+    print('A result:', A_result)
+    print('B result:', B_result)
 
     print('A payoff:', A_result.sum())
     print('B payoff:', B_result.sum())
@@ -93,8 +101,10 @@ if __name__ == '__main__':
                 pbar.set_postfix_str(f'Expected payoff: {A_expected_payoff / (len(A_decisions)*(i+1))}')
 
     A_expected_payoff /= (len(A_decisions)*len(B_possible_decisions))
+    A_regret = A_expected_payoff - A_result.sum()
     sleep(0.1) # fudge to make sure printout doesn't get messed up
     print('Expected payoff for player A:', A_expected_payoff)
+    print('Observable regret for player A:', A_regret)
 
 
     print('Computing expected payoff for player B...')
@@ -111,5 +121,7 @@ if __name__ == '__main__':
                 pbar.set_postfix_str(f'Expected payoff: {B_expected_payoff / (len(B_decisions)*(i+1))}')
 
     B_expected_payoff /= (len(B_decisions)*len(A_possible_decisions))
+    B_regret = B_expected_payoff - B_result.sum()
     sleep(0.1) # fudge to make sure printout doesn't get messed up
     print('Expected payoff for player B:', B_expected_payoff)
+    print('Observable regret for player A:', B_regret)

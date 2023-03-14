@@ -1,4 +1,5 @@
 import numpy as np
+from math import comb
 
 def coordinate_to_index(coordinate: tuple[int,int], battlefields: int, N: int) -> int:
     """
@@ -150,3 +151,43 @@ def compute_expected_payoff(decision, opp_decisions, win_draws=False, divide=Tru
     compare = np.greater_equal if win_draws else np.greater
     total = sum(compare(dec, decision).sum() for dec in opp_decisions)
     return total/len(opp_decisions) if divide else total
+
+
+
+# NOTE: this is actually slower than graph search!
+def build_allocations(battlefields: int, N: int) -> list[list[int]]:
+    """
+    Build the list of all possible allocations
+    :param battlefields: battlefields for allocation
+    :param N: resources available to allocate
+    :return: all possible allocations
+    """
+    if battlefields == 1:
+        return [[N]]
+
+    return [[n] + alloc
+            for n in range(N+1)
+            for alloc in build_allocations(battlefields-1, N-n)]
+
+
+def allocation_by_id(id: int, battlefields: int, N: int) -> list[int]:
+    """
+    Computes the allocation decision associated with the provided lexicographical index
+    :param id: id to compute decision from
+    :param battlefields: number of battlefields for allocation
+    :param N: resources available to allocate
+    :return: the allocations as a list of ints
+    """
+    if battlefields == 1:
+        return [N]
+
+    i = 0
+    offset = 0
+    unit = comb(battlefields+N-2-i, battlefields-2)
+    while offset + unit <= id:
+        offset += unit
+        i += 1
+        unit = comb(battlefields+N-2-i, battlefields-2)
+
+    return [i] + allocation_by_id(id-offset, battlefields-1, N-i)
+
