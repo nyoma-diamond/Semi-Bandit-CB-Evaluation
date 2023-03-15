@@ -111,14 +111,16 @@ if __name__ == '__main__':
             for i, partial_payoff in enumerate(pool.imap_unordered(partial(compute_expected_payoff,
                                                                            opp_decisions=A_decisions,
                                                                            win_draws=False,
-                                                                           divide=False),
+                                                                           divide=True),
                                                                    B_possible_decisions,
                                                                    chunksize=32)):
                 A_expected_payoff += partial_payoff
                 pbar.update(len(A_decisions))
-                pbar.set_postfix_str(f'Expected payoff: {A_expected_payoff / (len(A_decisions)*(i+1))}')
+                # pbar.set_postfix_str(f'Expected payoff: {A_expected_payoff / (len(A_decisions)*(i+1))}')  # use this when divide=False
+                pbar.set_postfix_str(f'Expected payoff: {A_expected_payoff / (i+1)}')
 
-    A_expected_payoff /= (len(A_decisions)*len(B_possible_decisions))
+    # A_expected_payoff /= (len(A_decisions)*len(B_possible_decisions))  # use this when divide=False
+    A_expected_payoff /= len(B_possible_decisions)
     A_regret = A_expected_payoff - A_result.sum()
     sleep(0.1) # fudge to make sure printout doesn't get messed up
     print('Expected payoff for player A:', A_expected_payoff)
@@ -131,14 +133,16 @@ if __name__ == '__main__':
             for i, partial_payoff in enumerate(pool.imap_unordered(partial(compute_expected_payoff,
                                                                            opp_decisions=B_decisions,
                                                                            win_draws=False,
-                                                                           divide=False),
+                                                                           divide=True),
                                                                    A_possible_decisions,
                                                                    chunksize=32)):
                 B_expected_payoff += partial_payoff
                 pbar.update(len(B_decisions))
-                pbar.set_postfix_str(f'Expected payoff: {B_expected_payoff / (len(B_decisions)*(i+1))}')
+                # pbar.set_postfix_str(f'Expected payoff: {B_expected_payoff / (len(B_decisions)*(i+1))}')  # use this when divide=False
+                pbar.set_postfix_str(f'Expected payoff: {B_expected_payoff / (i+1)}')
 
-    B_expected_payoff /= (len(B_decisions)*len(A_possible_decisions))
+    # B_expected_payoff /= (len(B_decisions)*len(A_possible_decisions))  # use this when divide=False
+    B_expected_payoff /= len(A_possible_decisions)
     B_regret = B_expected_payoff - B_result.sum()
     sleep(0.1) # fudge to make sure printout doesn't get messed up
     print('Expected payoff for player B:', B_expected_payoff)
