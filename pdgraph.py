@@ -1,5 +1,9 @@
 import numpy as np
 from math import comb
+from tqdm import tqdm
+import multiprocessing as mp
+from functools import partial
+from time import sleep
 
 def coordinate_to_index(coordinate: tuple[int,int], battlefields: int, N: int) -> int:
     """
@@ -136,21 +140,6 @@ def find_paths_allocations(adj_mat: np.ndarray, dest: int, battlefields: int, N:
     return find_subpaths_allocations(adj_mat, 0, dest, {}, battlefields, N)
 
 
-def compute_expected_payoff(decision, opp_decisions, win_draws=False, divide=True):
-    """
-    Compute the expected payoff for a given decision
-    :param decision: decision to compute the expected payoff of
-    :param opp_decisions: all possible decisions the opponent can take
-    :param win_draws: whether the player wins draws
-    :param divide: whether to divide the total available payoff by the number of possibilities (expected value)
-    :return: the expected payoff (total available payoff if divide is False)
-    """
-    compare = np.greater_equal if win_draws else np.greater
-    total = sum(compare(dec, decision).sum() for dec in opp_decisions)
-    return total/len(opp_decisions) if divide else total
-
-
-
 # NOTE: this is actually slower than graph search!
 def build_allocations(battlefields: int, N: int) -> list[list[int]]:
     """
@@ -188,3 +177,88 @@ def allocation_by_id(id: int, battlefields: int, N: int) -> list[int]:
 
     return [i] + allocation_by_id(id-offset, battlefields-1, N-i)
 
+
+def compute_expected_payoff_for_decision(decision: list[int], opp_decisions: list[list[int]], win_draws=False) -> float:
+    """
+    Compute the expected payoff for a given decision
+    :param decision: decision to compute the expected payoff of
+    :param opp_decisions: all possible decisions the opponent can take
+    :param win_draws: whether the player wins draws
+    :return: the expected payoff (total available payoff if divide is False)
+    """
+    compare = np.greater_equal if win_draws else np.greater
+    total = sum(compare(dec, decision).sum() for dec in opp_decisions)
+    return total/len(opp_decisions)
+
+
+def compute_expected_payoff(target_decisions: list[list[int]], opp_decisions: list[list[int]], win_draws=False, chunksize=1) -> float:
+    """
+    Compute the expected payoff for a set of decisions
+    :param target_decisions: set of decisions to compute the expected payoff of
+    :param opp_decisions: all possible decisions the opponent can take
+    :param win_draws: whether the player wins draws
+    :param chunksize: chunksize parameter passed to pool.imap_unordered
+    :return: expected payoff of the provided set of decisions
+    """
+    expected_payoff = 0
+
+    with tqdm(total=len(target_decisions)*len(opp_decisions), unit_scale=True) as pbar:
+        with mp.Pool() as pool:
+            for i, partial_payoff in enumerate(pool.imap_unordered(partial(compute_expected_payoff_for_decision,
+                                                                           opp_decisions=opp_decisions,
+                                                                           win_draws=win_draws),
+                                                                   target_decisions,
+                                                                   chunksize=chunksize)):
+                expected_payoff += partial_payoff
+                pbar.update(len(opp_decisions))
+                pbar.set_postfix_str(f'Expected payoff: {expected_payoff / (i+1)}')
+
+    sleep(0.1) # fudge to make sure printouts don't get messed up
+
+    expected_payoff /= len(target_decisions)
+
+    return expected_payoff
+
+
+def best_possible_payoff(opp_decision: list[int], N: int, win_draws=False) -> int:
+    """
+    Computes the best possible payoff against the provided decision
+    :param opp_decision: decision by opponent
+    :param N: available resources
+    :param win_draws: whether the player wins draws or not
+    :return: the best possible payoff
+    """
+    dec = sorted(opp_decision, reverse=True)
+
+    payoff = 0
+
+    while len(dec) > 0:
+        cur = dec.pop()
+        if cur >= N + win_draws:
+            break
+        else:
+            payoff += 1
+            N -= cur + (not win_draws)
+
+    return payoff
+
+
+def compute_expected_best_payoff(opp_decisions: list[list[int]], N: int, win_draws=False, chunksize=1):
+    expected_payoff = 0
+
+    with tqdm(total=len(opp_decisions), unit_scale=True) as pbar:
+        with mp.Pool() as pool:
+            for i, partial_payoff in enumerate(pool.imap_unordered(partial(best_possible_payoff,
+                                                                           N=N,
+                                                                           win_draws=win_draws),
+                                                                   opp_decisions,
+                                                                   chunksize=chunksize)):
+                expected_payoff += partial_payoff
+                pbar.update()
+                pbar.set_postfix_str(f'Expected payoff: {expected_payoff / (i+1)}')
+
+    sleep(0.1) # fudge to make sure printouts don't get messed up
+
+    expected_payoff /= len(opp_decisions)
+
+    return expected_payoff
