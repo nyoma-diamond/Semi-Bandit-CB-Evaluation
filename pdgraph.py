@@ -103,9 +103,6 @@ def prune_dead_ends(adj_mat: np.ndarray):
     return adj_mat
 
 
-
-
-
 def find_subpaths_allocations(adj_mat: np.ndarray, node: int, dest: int,
                               visited: dict[int, list[list[int]]], battlefields: int, N: int):
     """

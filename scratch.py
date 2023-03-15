@@ -14,10 +14,21 @@ if __name__ == '__main__':
     battlefields = 6
     N_A = 20
     N_B = 15
+    N_A_est = N_A + 10
+    N_B_est = N_B + 10
+
+    print('===== Parameters =====')
+    print('Battlefields:', battlefields)
+    print('A\'s resources:', N_A, '| B\'s estimate of A\'s resources:', N_A_est)
+    print('B\'s resources:', N_B, '| A\'s estimate of B\'s resources:', N_B_est)
 
     d_A = coordinate_to_index((battlefields, N_A), battlefields, N_A)
     d_B = coordinate_to_index((battlefields, N_B), battlefields, N_B)
 
+    d_A_est = coordinate_to_index((battlefields, N_A_est), battlefields, N_A_est)
+    d_B_est = coordinate_to_index((battlefields, N_B_est), battlefields, N_B_est)
+
+    print('\n===== Graph information =====')
     print('Building base adjacency matrices...')
 
     adj_mat_A = build_adjacency_matrix(battlefields, N_A)
@@ -26,17 +37,22 @@ if __name__ == '__main__':
     print('A nodes:',adj_mat_A.shape[0], '| A edges:',(adj_mat_A >= 0).sum())
     print('B nodes:',adj_mat_B.shape[0], '| B edges:',(adj_mat_B >= 0).sum())
 
+    A_num_decisions = comb(battlefields+N_A-1, battlefields-1)
+    B_num_decisions = comb(battlefields+N_B-1, battlefields-1)
+
+    print('A decisions:', A_num_decisions)
+    print('B decisions:', B_num_decisions)
+
+
     print('Finding all possible decisions...')
 
     # A_decisions = build_allocations(battlefields, N_A)
-    A_decisions = find_paths_allocations(adj_mat_A, d_A, battlefields, N_A)
-    A_num_decisions = comb(battlefields+N_A-1, battlefields-1)
-    print('A decisions:', A_num_decisions)
-
     # B_decisions = build_allocations(battlefields, N_B)
+    A_decisions = find_paths_allocations(adj_mat_A, d_A, battlefields, N_A)
     B_decisions = find_paths_allocations(adj_mat_B, d_B, battlefields, N_B)
-    B_num_decisions = comb(battlefields+N_B-1, battlefields-1)
-    print('B decisions:', B_num_decisions)
+
+
+    print('\n===== Example round =====')
 
     A_play = np.asarray(allocation_by_id(randint(0, A_num_decisions-1), battlefields, N_A))
     B_play = np.asarray(allocation_by_id(randint(0, B_num_decisions-1), battlefields, N_B))
@@ -52,6 +68,8 @@ if __name__ == '__main__':
 
     print('A payoff:', A_result.sum())
     print('B payoff:', B_result.sum())
+
+    print('\n===== Possible opponent play =====')
 
     print('Computing bounds...')
 
@@ -74,18 +92,18 @@ if __name__ == '__main__':
 
     print('Building possible decision (pruned) adjacency matrices...')
 
-    pruned_A = prune_dead_ends(build_adjacency_matrix(battlefields, N_A, A_bounds))
-    pruned_B = prune_dead_ends(build_adjacency_matrix(battlefields, N_B, B_bounds))
+    pruned_A = prune_dead_ends(build_adjacency_matrix(battlefields, N_A_est, A_bounds))
+    pruned_B = prune_dead_ends(build_adjacency_matrix(battlefields, N_B_est, B_bounds))
 
     print('Finding all possible decisions for round...')
 
-    A_possible_decisions = find_paths_allocations(pruned_A, d_A, battlefields, N_A)
-    B_possible_decisions = find_paths_allocations(pruned_B, d_B, battlefields, N_B)
-
+    A_possible_decisions = find_paths_allocations(pruned_A, d_A_est, battlefields, N_A_est)
+    B_possible_decisions = find_paths_allocations(pruned_B, d_B_est, battlefields, N_B_est)
 
     A_expected_payoff = 0
     B_expected_payoff = 0
 
+    print('\n===== Expected payoff/regret =====')
 
     print('Computing expected payoff for player A...')
     with tqdm(total=len(A_decisions)*len(B_possible_decisions), unit_scale=True) as pbar:
