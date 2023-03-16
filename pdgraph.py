@@ -119,10 +119,10 @@ def prune_dead_ends(adj_mat: np.ndarray, prune_unreachable=False) -> np.ndarray:
 def find_subpaths_allocations(adj_mat: np.ndarray,
                               node: int,
                               dest: int,
-                              visited: dict[int, list[list[int]]],
+                              visited: dict[int, np.ndarray],
                               battlefields: int,
                               N: int,
-                              pbar: tqdm = None) -> list[list[int]]:
+                              pbar: tqdm = None) -> np.ndarray:
     """
     Find all paths (partial allocations) between the provided nodes in the provided DAG, represented by their corresponding resource allocations
     :param node: the starting node
@@ -135,14 +135,15 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
     :return: all paths (partial allocations) between the provided nodes
     """
     if node == dest:
-        return [[]]
+        return np.empty(shape=(1,0))
     elif node not in visited.keys():
         children_start, children_end = get_child_indices(node, battlefields, N)
 
-        visited[node] = [[adj_mat[node, child]] + subpath
-                         for child in range(children_start, children_end)
-                         if adj_mat[node, child] != -1
-                         for subpath in find_subpaths_allocations(adj_mat, child, dest, visited, battlefields, N, pbar)]
+        visited[node] = np.asarray([[adj_mat[node, child]] + subpath
+                                    for child in range(children_start, children_end)
+                                    if adj_mat[node, child] != -1
+                                    for subpath in find_subpaths_allocations(adj_mat, child, dest, visited, battlefields, N, pbar)],
+                                   dtype=np.ubyte)
 
         if pbar is not None:
             pbar.update()
@@ -154,7 +155,7 @@ def find_paths_allocations(adj_mat: np.ndarray,
                            dest: int,
                            battlefields: int,
                            N: int,
-                           track_progress=False) -> list[list[int]]:
+                           track_progress=False) -> np.ndarray:
     """
     Find all possible paths (decisions) through the provided DAG
     :param dest: the destination node
