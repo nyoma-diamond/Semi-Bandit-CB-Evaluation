@@ -288,7 +288,7 @@ def best_possible_payoff(opp_decision: list[int], N: int, win_draws=False) -> in
     return payoff
 
 
-def compute_expected_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False):
+def compute_expected_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
     """
     Computes the expected value for the best possible payoff
     :param opp_decisions: set of decisions possible to be played by the opponent
@@ -296,14 +296,13 @@ def compute_expected_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=Fa
     :param win_draws: whether the player wins draws or not
     :return: expected value for the best possible payoff
     """
-    use_tqdm = False
-    if len(opp_decisions) > 1e5:
-        use_tqdm = True
-        opp_decisions = tqdm(opp_decisions, unit_scale=True, miniters=len(opp_decisions)/1e4, mininterval=0.2, leave=False)
-
-    total_payoff = sum(best_possible_payoff(decision, N=N, win_draws=win_draws) for decision in opp_decisions)
-
-    if use_tqdm:
-        opp_decisions.close()
+    with mp.Pool() as pool:
+        total_payoff = sum(tqdm(pool.imap_unordered(partial(best_possible_payoff, N=N, win_draws=win_draws),
+                                                    opp_decisions,
+                                                    chunksize=chunksize),
+                                total=len(opp_decisions),
+                                unit_scale=True,
+                                miniters=len(opp_decisions)/1e4,
+                                mininterval=0.2))
 
     return total_payoff / len(opp_decisions)

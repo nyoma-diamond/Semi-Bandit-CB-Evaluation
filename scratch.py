@@ -10,7 +10,7 @@ from pdgraph import compute_expected_payoff, compute_expected_best_payoff, best_
 
 if __name__ == '__main__':
     battlefields = 6
-    N_A = 20
+    N_A = 30
     N_B = 20
     N_A_est = N_A
     N_B_est = N_B
@@ -126,7 +126,7 @@ if __name__ == '__main__':
         A_expected_payoff = compute_expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=16)
         A_expected_regret = A_expected_payoff - A_result.sum()
 
-    A_expected_best_payoff = compute_expected_best_payoff(B_possible_decisions, N_A, win_draws=False)
+    A_expected_best_payoff = compute_expected_best_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=16)
     A_best_possible_payoff = best_possible_payoff(list(B_play), N_A, win_draws=False)
 
     A_observable_regret = A_expected_best_payoff - A_result.sum()
@@ -155,7 +155,7 @@ if __name__ == '__main__':
         B_expected_payoff = compute_expected_payoff(B_decisions, A_possible_decisions, win_draws=True, chunksize=16)
         B_expected_regret = B_expected_payoff - B_result.sum()
 
-    B_expected_best_payoff = compute_expected_best_payoff(A_possible_decisions, N_B, win_draws=True)
+    B_expected_best_payoff = compute_expected_best_payoff(A_possible_decisions, N_B, win_draws=True, chunksize=16)
     B_best_possible_payoff = best_possible_payoff(list(A_play), N_B, win_draws=True)
 
     B_observable_regret = B_expected_best_payoff - B_result.sum()
