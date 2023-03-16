@@ -139,7 +139,7 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
     elif node not in visited.keys():
         children_start, children_end = get_child_indices(node, battlefields, N)
 
-        visited[node] = np.asarray([[adj_mat[node, child]] + subpath
+        visited[node] = np.asarray([np.concatenate(([adj_mat[node, child]], subpath))
                                     for child in range(children_start, children_end)
                                     if adj_mat[node, child] != -1
                                     for subpath in find_subpaths_allocations(adj_mat, child, dest, visited, battlefields, N, pbar)],
@@ -233,8 +233,8 @@ def compute_expected_payoff_for_decision(decision: list[int],
     return total/len(opp_decisions)
 
 
-def compute_expected_payoff(target_decisions: list[list[int]],
-                            opp_decisions: list[list[int]],
+def compute_expected_payoff(target_decisions: np.ndarray,
+                            opp_decisions: np.ndarray,
                             win_draws=False,
                             chunksize=1) -> float:
     """
@@ -288,7 +288,7 @@ def best_possible_payoff(opp_decision: list[int], N: int, win_draws=False) -> in
     return payoff
 
 
-def compute_expected_best_payoff(opp_decisions: list[list[int]], N: int, win_draws=False):
+def compute_expected_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False):
     """
     Computes the expected value for the best possible payoff
     :param opp_decisions: set of decisions possible to be played by the opponent
@@ -300,7 +300,10 @@ def compute_expected_best_payoff(opp_decisions: list[list[int]], N: int, win_dra
     if len(opp_decisions) > 1e5:
         use_tqdm = True
         opp_decisions = tqdm(opp_decisions, unit_scale=True, miniters=len(opp_decisions)/1e4, mininterval=0.2, leave=False)
+
     total_payoff = sum(best_possible_payoff(decision, N=N, win_draws=win_draws) for decision in opp_decisions)
+
     if use_tqdm:
         opp_decisions.close()
+
     return total_payoff / len(opp_decisions)

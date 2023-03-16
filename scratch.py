@@ -9,7 +9,7 @@ from pdgraph import compute_expected_payoff, compute_expected_best_payoff, best_
 
 
 if __name__ == '__main__':
-    battlefields = 16
+    battlefields = 6
     N_A = 20
     N_B = 20
     N_A_est = N_A
@@ -110,7 +110,6 @@ if __name__ == '__main__':
     print('\nFinding all possible decisions for player B...')
     B_possible_decisions = find_paths_allocations(pruned_B, d_B_est, battlefields, N_B_est, track_progress=track_dfs)
     print('Possible decisions A thinks B could have played:', len(B_possible_decisions))
-
 
 
 
