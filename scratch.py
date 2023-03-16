@@ -9,16 +9,20 @@ from pdgraph import compute_expected_payoff, compute_expected_best_payoff, best_
 
 
 if __name__ == '__main__':
-    battlefields = 6
+    battlefields = 15
     N_A = 20
     N_B = 15
     N_A_est = N_A
     N_B_est = N_B
+
+    use_expected_payoff = False
     A_sample_size = None
     B_sample_size = None
 
 
+
     print('===== Parameters =====')
+
     print('Battlefields:', battlefields)
     print('A\'s resources:', N_A, '| B\'s estimate of A\'s resources:', N_A_est)
     print('B\'s resources:', N_B, '| A\'s estimate of B\'s resources:', N_B_est)
@@ -32,7 +36,11 @@ if __name__ == '__main__':
     d_A_est = coordinate_to_index((battlefields, N_A_est), battlefields, N_A_est)
     d_B_est = coordinate_to_index((battlefields, N_B_est), battlefields, N_B_est)
 
+
+
+
     print('\n===== Graph information =====')
+
     print('Building base adjacency matrices...')
 
     adj_mat_A = build_adjacency_matrix(battlefields, N_A)
@@ -47,18 +55,6 @@ if __name__ == '__main__':
     print('A decisions:', A_num_decisions)
     print('B decisions:', B_num_decisions)
 
-
-    print('Building reference decision set...')
-
-    if A_sample_size is None:
-        A_decisions = find_paths_allocations(adj_mat_A, d_A, battlefields, N_A)
-    else:
-        A_decisions = [allocation_by_id(id, battlefields, N_A) for id in random.choices(range(A_num_decisions), k=A_sample_size)]
-
-    if B_sample_size is None:
-        B_decisions = find_paths_allocations(adj_mat_B, d_B, battlefields, N_B)
-    else:
-        B_decisions = [allocation_by_id(id, battlefields, N_B) for id in random.choices(range(B_num_decisions), k=B_sample_size)]
 
 
     print('\n===== Example round =====')
@@ -77,6 +73,8 @@ if __name__ == '__main__':
 
     print('A payoff:', A_result.sum())
     print('B payoff:', B_result.sum())
+
+
 
     print('\n===== Possible opponent play =====')
 
@@ -109,43 +107,66 @@ if __name__ == '__main__':
     A_possible_decisions = find_paths_allocations(pruned_A, d_A_est, battlefields, N_A_est)
     B_possible_decisions = find_paths_allocations(pruned_B, d_B_est, battlefields, N_B_est)
 
+    print('Possible decisions A thinks B could have played:', len(A_possible_decisions))
+    print('Possible decisions B thinks A could have played:', len(B_possible_decisions))
+
+
+
     print('\n===== Expected payoff/regret =====')
 
-    print('Computing expected payoff for player A...')
+    print('--- Player A ---')
 
-    A_expected_payoff = compute_expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=16)
+    if use_expected_payoff:
+        if A_sample_size is None:
+            A_decisions = find_paths_allocations(adj_mat_A, d_A, battlefields, N_A)
+        else:
+            A_decisions = [allocation_by_id(id, battlefields, N_A) for id in random.choices(range(A_num_decisions), k=A_sample_size)]
+
+        A_expected_payoff = compute_expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=16)
+        A_expected_regret = A_expected_payoff - A_result.sum()
+
     A_expected_best_payoff = compute_expected_best_payoff(B_possible_decisions, N_A, win_draws=False)
     A_best_possible_payoff = best_possible_payoff(list(B_play), N_A, win_draws=False)
 
-    A_expected_regret = A_expected_payoff - A_result.sum()
     A_observable_regret = A_expected_best_payoff - A_result.sum()
     A_absolute_regret = A_best_possible_payoff - A_result.sum()
 
-    print('Actual payoff for player A:', A_result.sum())
-    print('Expected payoff for player A:', A_expected_payoff)
-    print('Expected best payoff for player A:', A_expected_best_payoff)
-    print('Best possible payoff for player A:', A_best_possible_payoff)
+    print('Actual payoff:', A_result.sum())
+    if use_expected_payoff:
+        print('Expected payoff:', A_expected_payoff)
+    print('Expected best payoff:', A_expected_best_payoff)
+    print('Absolute best possible payoff:', A_best_possible_payoff, '\n')
 
-    print('\nExpected regret for player A:', A_expected_regret)
-    print('Observable regret for player A:', A_observable_regret)
-    print('Absolute regret for player A:', A_absolute_regret)
+    if use_expected_payoff:
+        print('Expected regret:', A_expected_regret)
+    print('Observable regret:', A_observable_regret)
+    print('Absolute regret:', A_absolute_regret)
 
 
-    print('\nComputing expected payoff for player B...')
+    print('\n--- Player B ---')
 
-    B_expected_payoff = compute_expected_payoff(B_decisions, A_possible_decisions, win_draws=True, chunksize=16)
+    if use_expected_payoff:
+        if B_sample_size is None:
+            B_decisions = find_paths_allocations(adj_mat_B, d_B, battlefields, N_B)
+        else:
+            B_decisions = [allocation_by_id(id, battlefields, N_B) for id in random.choices(range(B_num_decisions), k=B_sample_size)]
+
+        B_expected_payoff = compute_expected_payoff(B_decisions, A_possible_decisions, win_draws=True, chunksize=16)
+        B_expected_regret = B_expected_payoff - B_result.sum()
+
     B_expected_best_payoff = compute_expected_best_payoff(A_possible_decisions, N_B, win_draws=True)
     B_best_possible_payoff = best_possible_payoff(list(A_play), N_B, win_draws=True)
 
-    B_expected_regret = B_expected_payoff - B_result.sum()
     B_observable_regret = B_expected_best_payoff - B_result.sum()
     B_absolute_regret = B_best_possible_payoff - B_result.sum()
 
-    print('Actual payoff for player B:', B_result.sum())
-    print('Expected payoff for player B:', B_expected_payoff)
-    print('Expected best payoff for player B:', B_expected_best_payoff)
-    print('Best possible payoff for player B:', B_best_possible_payoff)
+    print('Actual payoff:', B_result.sum())
+    if use_expected_payoff:
+        print('Expected payoff:', B_expected_payoff)
+    print('Expected best payoff:', B_expected_best_payoff)
+    print('Absolute best possible payoff:', B_best_possible_payoff, '\n')
 
-    print('\nExpected regret for player B:', B_expected_regret)
-    print('Observable regret for player B:', B_observable_regret)
-    print('Absolute regret for player B:', B_absolute_regret)
+    if use_expected_payoff:
+        print('Expected regret:', B_expected_regret)
+    print('Observable regret:', B_observable_regret)
+    print('Absolute regret:', B_absolute_regret)

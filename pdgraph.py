@@ -270,5 +270,11 @@ def compute_expected_best_payoff(opp_decisions: list[list[int]], N: int, win_dra
     :param win_draws: whether the player wins draws or not
     :return: expected value for the best possible payoff
     """
+    use_tqdm = False
+    if len(opp_decisions) > 1e5:
+        use_tqdm = True
+        opp_decisions = tqdm(opp_decisions, unit_scale=True, miniters=len(opp_decisions)/1e4, mininterval=0.2, leave=False)
     total_payoff = sum(best_possible_payoff(decision, N=N, win_draws=win_draws) for decision in opp_decisions)
+    if use_tqdm:
+        opp_decisions.close()
     return total_payoff / len(opp_decisions)
