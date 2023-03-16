@@ -9,9 +9,9 @@ from pdgraph import compute_expected_payoff, compute_expected_best_payoff, best_
 
 
 if __name__ == '__main__':
-    battlefields = 15
+    battlefields = 16
     N_A = 20
-    N_B = 15
+    N_B = 20
     N_A_est = N_A
     N_B_est = N_B
 
@@ -19,6 +19,7 @@ if __name__ == '__main__':
     A_sample_size = None
     B_sample_size = None
 
+    track_dfs = True
 
 
     print('===== Parameters =====')
@@ -99,16 +100,17 @@ if __name__ == '__main__':
 
     print('Building possible decision (pruned) adjacency matrices...')
 
-    pruned_A = prune_dead_ends(build_adjacency_matrix(battlefields, N_A_est, A_bounds))
-    pruned_B = prune_dead_ends(build_adjacency_matrix(battlefields, N_B_est, B_bounds))
+    pruned_A = prune_dead_ends(build_adjacency_matrix(battlefields, N_A_est, A_bounds), prune_unreachable=track_dfs)
+    pruned_B = prune_dead_ends(build_adjacency_matrix(battlefields, N_B_est, B_bounds), prune_unreachable=track_dfs)
 
-    print('Finding all possible decisions for round...')
+    print('\nFinding all possible decisions for player A...')
+    A_possible_decisions = find_paths_allocations(pruned_A, d_A_est, battlefields, N_A_est, track_progress=track_dfs)
+    print('Possible decisions B thinks A could have played:', len(A_possible_decisions))
 
-    A_possible_decisions = find_paths_allocations(pruned_A, d_A_est, battlefields, N_A_est)
-    B_possible_decisions = find_paths_allocations(pruned_B, d_B_est, battlefields, N_B_est)
+    print('\nFinding all possible decisions for player B...')
+    B_possible_decisions = find_paths_allocations(pruned_B, d_B_est, battlefields, N_B_est, track_progress=track_dfs)
+    print('Possible decisions A thinks B could have played:', len(B_possible_decisions))
 
-    print('Possible decisions A thinks B could have played:', len(A_possible_decisions))
-    print('Possible decisions B thinks A could have played:', len(B_possible_decisions))
 
 
 
@@ -118,7 +120,7 @@ if __name__ == '__main__':
 
     if use_expected_payoff:
         if A_sample_size is None:
-            A_decisions = find_paths_allocations(adj_mat_A, d_A, battlefields, N_A)
+            A_decisions = find_paths_allocations(adj_mat_A, d_A, battlefields, N_A, track_progress=track_dfs)
         else:
             A_decisions = [allocation_by_id(id, battlefields, N_A) for id in random.choices(range(A_num_decisions), k=A_sample_size)]
 
@@ -147,7 +149,7 @@ if __name__ == '__main__':
 
     if use_expected_payoff:
         if B_sample_size is None:
-            B_decisions = find_paths_allocations(adj_mat_B, d_B, battlefields, N_B)
+            B_decisions = find_paths_allocations(adj_mat_B, d_B, battlefields, N_B, track_progress=track_dfs)
         else:
             B_decisions = [allocation_by_id(id, battlefields, N_B) for id in random.choices(range(B_num_decisions), k=B_sample_size)]
 

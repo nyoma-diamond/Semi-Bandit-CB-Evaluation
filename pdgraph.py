@@ -95,10 +95,11 @@ def build_adjacency_matrix(battlefields: int,
     return adj_mat
 
 
-def prune_dead_ends(adj_mat: np.ndarray) -> np.ndarray:
+def prune_dead_ends(adj_mat: np.ndarray, prune_unreachable=False) -> np.ndarray:
     """
     Removes outgoing edges from all nodes that cannot reach the final node
     :param adj_mat: adjacency matrix representing the graph to prune
+    :param prune_unreachable: whether to also remove unreachable nodes
     :return: the pruned adjacency matrix
     """
     adj_mat = adj_mat.copy()
@@ -106,6 +107,11 @@ def prune_dead_ends(adj_mat: np.ndarray) -> np.ndarray:
     for i in range(adj_mat.shape[0]-2, -1, -1): # need -2 instead of -1 because final node never has any children
         if (adj_mat[i]==-1).all():
             adj_mat[:,i] = -1
+
+    if prune_unreachable:
+        for i in range(1, adj_mat.shape[0]-1): # need to start at 1 because the first node has no parents
+            if (adj_mat[:,i]==-1).all():
+                adj_mat[i] = -1
 
     return adj_mat
 
@@ -115,7 +121,8 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
                               dest: int,
                               visited: dict[int, list[list[int]]],
                               battlefields: int,
-                              N: int) -> list[list[int]]:
+                              N: int,
+                              pbar: tqdm = None) -> list[list[int]]:
     """
     Find all paths (partial allocations) between the provided nodes in the provided DAG, represented by their corresponding resource allocations
     :param node: the starting node
@@ -124,6 +131,7 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
     :param adj_mat: adjacency matrix representing the DAG being searched
     :param battlefields: the number of battlefields
     :param N: the number of resources available to the player
+    :param pbar: tqdm progress bar for progress tracking
     :return: all paths (partial allocations) between the provided nodes
     """
     if node == dest:
@@ -134,7 +142,10 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
         visited[node] = [[adj_mat[node, child]] + subpath
                          for child in range(children_start, children_end)
                          if adj_mat[node, child] != -1
-                         for subpath in find_subpaths_allocations(adj_mat, child, dest, visited, battlefields, N)]
+                         for subpath in find_subpaths_allocations(adj_mat, child, dest, visited, battlefields, N, pbar)]
+
+        if pbar is not None:
+            pbar.update()
 
     return visited[node]
 
@@ -142,16 +153,30 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
 def find_paths_allocations(adj_mat: np.ndarray,
                            dest: int,
                            battlefields: int,
-                           N: int) -> list[list[int]]:
+                           N: int,
+                           track_progress=False) -> list[list[int]]:
     """
     Find all possible paths (decisions) through the provided DAG
     :param dest: the destination node
     :param adj_mat: adjacency matrix representing the DAG being searched
     :param battlefields: the number of battlefields
     :param N: the number of resources available to the player
+    :param track_progress: whether to use tqdm to track progress (estimated by proportion of nodes fully explored)
+                           NOTE: estimate assumes all nodes are accessible from the source node
     :return: all possible allocations (paths through the DAG)
     """
-    return find_subpaths_allocations(adj_mat, 0, dest, {}, battlefields, N)
+    pbar = None
+    if track_progress:
+        nodes = (adj_mat != -1).any(axis=1).sum()
+        pbar = tqdm(total=nodes)
+
+    paths = find_subpaths_allocations(adj_mat, 0, dest, {}, battlefields, N, pbar)
+
+    if track_progress:
+        pbar.close()
+        sleep(0.1) # fudge to make sure printouts don't get messed up
+
+    return paths
 
 
 # NOTE: this is actually slower than graph search!
