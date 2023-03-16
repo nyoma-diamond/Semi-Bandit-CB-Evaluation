@@ -9,7 +9,7 @@ from pdgraph import compute_expected_payoff, compute_expected_best_payoff, best_
 
 
 if __name__ == '__main__':
-    battlefields = 5
+    battlefields = 6
     N_A = 20
     N_B = 15
     N_A_est = N_A
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     print('Computing expected payoff for player A...')
 
     A_expected_payoff = compute_expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=16)
-    A_expected_best_payoff = compute_expected_best_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=16)
+    A_expected_best_payoff = compute_expected_best_payoff(B_possible_decisions, N_A, win_draws=False)
     A_best_possible_payoff = best_possible_payoff(list(B_play), N_A, win_draws=False)
 
     A_expected_regret = A_expected_payoff - A_result.sum()
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     print('\nComputing expected payoff for player B...')
 
     B_expected_payoff = compute_expected_payoff(B_decisions, A_possible_decisions, win_draws=True, chunksize=16)
-    B_expected_best_payoff = compute_expected_best_payoff(A_possible_decisions, N_B, win_draws=True, chunksize=16)
+    B_expected_best_payoff = compute_expected_best_payoff(A_possible_decisions, N_B, win_draws=True)
     B_best_possible_payoff = best_possible_payoff(list(A_play), N_B, win_draws=True)
 
     B_expected_regret = B_expected_payoff - B_result.sum()
@@ -149,5 +149,3 @@ if __name__ == '__main__':
     print('\nExpected regret for player B:', B_expected_regret)
     print('Observable regret for player B:', B_observable_regret)
     print('Absolute regret for player B:', B_absolute_regret)
-
-    # TODO: improve sampling for expected payoff

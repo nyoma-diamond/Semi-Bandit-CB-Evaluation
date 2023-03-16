@@ -10,7 +10,7 @@ def coordinate_to_index(coordinate: tuple[int,int], battlefields: int, N: int) -
     Converts a provided coordinate to the relevant adjacency matrix index
     :param coordinate: coordinate to convert
     :param battlefields: number of battlefields
-    :param N: N (total resources) for relevant player
+    :param N: resources available to the player
     :return: the equivalent index. -1 if invalid coordinate
     """
     if coordinate[0] == coordinate[1] == 0:
@@ -27,7 +27,8 @@ def index_to_coordinate(index: int, battlefields: int, N: int) -> tuple[int,int]
     """
     Converts a provided adjacency matrix index to relevant graph coordinate
     :param index: index to convert
-    :param N: N (total resources) for relevant player
+    :param battlefields: the number of battlefields
+    :param N: resources available to the player
     :return: the equivalent coordinate. (-1,-1) if invalid index is provided
     """
     if index < 0 or index > (battlefields-1) * (N+1) + 1:
@@ -60,7 +61,9 @@ def get_child_indices(node: int, battlefields: int, N: int) -> tuple[int,int]:
 
 
 
-def build_adjacency_matrix(battlefields: int, N: int, bounds: list[tuple[int,int]] = None) -> np.ndarray:
+def build_adjacency_matrix(battlefields: int,
+                           N: int,
+                           bounds: list[tuple[int,int]] = None) -> np.ndarray:
     """
     Creates adjacency matrix for possible allocations/decisions for a player
     :param battlefields: the number of battlefields in the game
@@ -92,7 +95,7 @@ def build_adjacency_matrix(battlefields: int, N: int, bounds: list[tuple[int,int
     return adj_mat
 
 
-def prune_dead_ends(adj_mat: np.ndarray):
+def prune_dead_ends(adj_mat: np.ndarray) -> np.ndarray:
     """
     Removes outgoing edges from all nodes that cannot reach the final node
     :param adj_mat: adjacency matrix representing the graph to prune
@@ -107,14 +110,20 @@ def prune_dead_ends(adj_mat: np.ndarray):
     return adj_mat
 
 
-def find_subpaths_allocations(adj_mat: np.ndarray, node: int, dest: int,
-                              visited: dict[int, list[list[int]]], battlefields: int, N: int):
+def find_subpaths_allocations(adj_mat: np.ndarray,
+                              node: int,
+                              dest: int,
+                              visited: dict[int, list[list[int]]],
+                              battlefields: int,
+                              N: int) -> list[list[int]]:
     """
     Find all paths (partial allocations) between the provided nodes in the provided DAG, represented by their corresponding resource allocations
     :param node: the starting node
     :param dest: the destination node
     :param visited: dictionary of all subpaths from nodes already visited (partial allocations)
     :param adj_mat: adjacency matrix representing the DAG being searched
+    :param battlefields: the number of battlefields
+    :param N: the number of resources available to the player
     :return: all paths (partial allocations) between the provided nodes
     """
     if node == dest:
@@ -130,11 +139,16 @@ def find_subpaths_allocations(adj_mat: np.ndarray, node: int, dest: int,
     return visited[node]
 
 
-def find_paths_allocations(adj_mat: np.ndarray, dest: int, battlefields: int, N: int):
+def find_paths_allocations(adj_mat: np.ndarray,
+                           dest: int,
+                           battlefields: int,
+                           N: int) -> list[list[int]]:
     """
     Find all possible paths (decisions) through the provided DAG
     :param dest: the destination node
     :param adj_mat: adjacency matrix representing the DAG being searched
+    :param battlefields: the number of battlefields
+    :param N: the number of resources available to the player
     :return: all possible allocations (paths through the DAG)
     """
     return find_subpaths_allocations(adj_mat, 0, dest, {}, battlefields, N)
@@ -178,7 +192,9 @@ def allocation_by_id(id: int, battlefields: int, N: int) -> list[int]:
     return [i] + allocation_by_id(id-offset, battlefields-1, N-i)
 
 
-def compute_expected_payoff_for_decision(decision: list[int], opp_decisions: list[list[int]], win_draws=False) -> float:
+def compute_expected_payoff_for_decision(decision: list[int],
+                                         opp_decisions: list[list[int]],
+                                         win_draws=False) -> float:
     """
     Compute the expected payoff for a given decision
     :param decision: decision to compute the expected payoff of
@@ -191,7 +207,10 @@ def compute_expected_payoff_for_decision(decision: list[int], opp_decisions: lis
     return total/len(opp_decisions)
 
 
-def compute_expected_payoff(target_decisions: list[list[int]], opp_decisions: list[list[int]], win_draws=False, chunksize=1) -> float:
+def compute_expected_payoff(target_decisions: list[list[int]],
+                            opp_decisions: list[list[int]],
+                            win_draws=False,
+                            chunksize=1) -> float:
     """
     Compute the expected payoff for a set of decisions
     :param target_decisions: set of decisions to compute the expected payoff of
@@ -243,22 +262,13 @@ def best_possible_payoff(opp_decision: list[int], N: int, win_draws=False) -> in
     return payoff
 
 
-def compute_expected_best_payoff(opp_decisions: list[list[int]], N: int, win_draws=False, chunksize=1):
-    expected_payoff = 0
-
-    with tqdm(total=len(opp_decisions), unit_scale=True) as pbar:
-        with mp.Pool() as pool:
-            for i, partial_payoff in enumerate(pool.imap_unordered(partial(best_possible_payoff,
-                                                                           N=N,
-                                                                           win_draws=win_draws),
-                                                                   opp_decisions,
-                                                                   chunksize=chunksize)):
-                expected_payoff += partial_payoff
-                pbar.update()
-                pbar.set_postfix_str(f'Expected payoff: {expected_payoff / (i+1)}')
-
-    sleep(0.1) # fudge to make sure printouts don't get messed up
-
-    expected_payoff /= len(opp_decisions)
-
-    return expected_payoff
+def compute_expected_best_payoff(opp_decisions: list[list[int]], N: int, win_draws=False):
+    """
+    Computes the expected value for the best possible payoff
+    :param opp_decisions: set of decisions possible to be played by the opponent
+    :param N: resources available to the player
+    :param win_draws: whether the player wins draws or not
+    :return: expected value for the best possible payoff
+    """
+    total_payoff = sum(best_possible_payoff(decision, N=N, win_draws=win_draws) for decision in opp_decisions)
+    return total_payoff / len(opp_decisions)
