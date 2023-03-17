@@ -209,7 +209,7 @@ def allocation_by_id(id: int, battlefields: int, N: int) -> list[int]:
 
     i = 0
     offset = 0
-    unit = comb(battlefields+N-2-i, battlefields-2)
+    unit = comb(battlefields+N-2, battlefields-2)
     while offset + unit <= id:
         offset += unit
         i += 1
