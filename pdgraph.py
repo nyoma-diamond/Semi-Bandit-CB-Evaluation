@@ -208,14 +208,13 @@ def allocation_by_id(id: int, battlefields: int, N: int) -> list[int]:
         return [N]
 
     i = 0
-    offset = 0
     unit = comb(battlefields+N-2, battlefields-2)
-    while offset + unit <= id:
-        offset += unit
+    while unit <= id:
+        id -= unit
         i += 1
         unit = comb(battlefields+N-2-i, battlefields-2)
 
-    return [i] + allocation_by_id(id-offset, battlefields-1, N-i)
+    return [i] + allocation_by_id(id, battlefields-1, N-i)
 
 
 def compute_expected_payoff_for_decision(decision: list[int],
