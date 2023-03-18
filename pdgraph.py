@@ -278,11 +278,11 @@ def best_possible_payoff(opp_decision: list[int], N: int, win_draws=False) -> in
 
     while len(dec) > 0:
         cur = dec.pop()
-        if cur >= N + win_draws:
-            break
-        else:
+        if cur < N + win_draws:
             payoff += 1
             N -= cur + (not win_draws)
+        else:
+            break
 
     return payoff
 
