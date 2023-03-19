@@ -1,8 +1,7 @@
-import math
 import numpy as np
 
 
-class optimistic_allocation:
+class Optimistic_Allocation:
     """
     Optimistic Allocation algorithm from Lattimore et al. (https://arxiv.org/pdf/1406.3840.pdf)
     """
@@ -98,7 +97,7 @@ if __name__ == '__main__':
 
     v = np.array([0.1, 0.5, 0.2, 0.3, 0.4], dtype=np.float_)
 
-    player_B = optimistic_allocation(horizon, battlefields, np.array([0.09, 0.4, 0.15, 0.25, 0.3]))
+    player_B = Optimistic_Allocation(horizon, battlefields, np.array([0.09, 0.4, 0.15, 0.25, 0.3]))
 
     for i in range(horizon):
         print()
