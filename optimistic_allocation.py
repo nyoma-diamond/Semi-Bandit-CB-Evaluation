@@ -96,9 +96,9 @@ if __name__ == '__main__':
 
     track_dfs = True
 
-    v = np.array([0.1, 0.6, 0.2, 0.3, 0.4], dtype=np.float_)
+    v = np.array([0.1, 0.5, 0.2, 0.3, 0.4], dtype=np.float_)
 
-    player_B = optimistic_allocation(horizon, battlefields, v / np.array([2, 3, 4, 2.5, 1.5]))
+    player_B = optimistic_allocation(horizon, battlefields, np.array([0.09, 0.4, 0.15, 0.25, 0.3]))
 
     for i in range(horizon):
         print()
