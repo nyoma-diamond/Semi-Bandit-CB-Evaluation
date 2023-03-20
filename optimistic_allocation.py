@@ -88,22 +88,17 @@ class Optimistic_Allocation:
 
 if __name__ == '__main__':
     battlefields = 5
-    N_A = 30
-    N_B = 20
-
     horizon = 10
-
-    track_dfs = True
 
     v = np.array([0.1, 0.5, 0.2, 0.3, 0.4], dtype=np.float_)
 
-    player_B = Optimistic_Allocation(horizon, battlefields, np.array([0.09, 0.4, 0.15, 0.25, 0.3]))
+    player = Optimistic_Allocation(horizon, battlefields, np.array([0.09, 0.4, 0.15, 0.25, 0.3]))
 
     for i in range(horizon):
         print()
-        allocation = player_B.generate_decision()
-        print('Player B\'s allocation:', allocation)
-        player_B.play_decision(allocation)
+        allocation = player.generate_decision()
+        print('Player\'s allocation:', allocation)
+        player.play_decision(allocation)
 
         p = np.minimum(1, allocation / v)
         print('Success probabilities:', p)
@@ -111,4 +106,4 @@ if __name__ == '__main__':
         X = np.random.binomial(1, p)
         print('Payoff:', X)
 
-        player_B.update(X)
+        player.update(X)
