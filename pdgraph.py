@@ -232,10 +232,10 @@ def compute_expected_payoff_for_decision(decision: list[int],
     return total/len(opp_decisions)
 
 
-def compute_expected_payoff(target_decisions: np.ndarray,
-                            opp_decisions: np.ndarray,
-                            win_draws=False,
-                            chunksize=1) -> float:
+def expected_payoff(target_decisions: np.ndarray,
+                    opp_decisions: np.ndarray,
+                    win_draws=False,
+                    chunksize=1) -> float:
     """
     Compute the expected payoff for a set of decisions
     :param target_decisions: set of decisions to compute the expected payoff of
@@ -264,7 +264,7 @@ def compute_expected_payoff(target_decisions: np.ndarray,
     return expected_payoff
 
 
-def best_possible_payoff(opp_decision: list[int], N: int, win_draws=False) -> int:
+def best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws=False) -> int:
     """
     Computes the best possible payoff against the provided decision
     :param opp_decision: decision by opponent
@@ -287,7 +287,7 @@ def best_possible_payoff(opp_decision: list[int], N: int, win_draws=False) -> in
     return payoff
 
 
-def compute_expected_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
+def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
     """
     Computes the expected value for the best possible payoff
     :param opp_decisions: set of decisions possible to be played by the opponent
@@ -304,4 +304,28 @@ def compute_expected_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=Fa
                                 miniters=len(opp_decisions)/1e4,
                                 mininterval=0.2))
 
+        sleep(0.1) # fudge to make sure printouts don't get messed up
+
     return total_payoff / len(opp_decisions)
+
+
+def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
+    """
+    Computes the supremum possible payoff (i.e., the minimum best possible value for payoff)
+    :param opp_decisions: set of decisions possible to be played by the opponent
+    :param N: resources available to the player
+    :param win_draws: whether the player wins draws or not
+    :return: supremum payoff
+    """
+    with mp.Pool() as pool:
+        total_payoff = min(tqdm(pool.imap_unordered(partial(best_possible_payoff, N=N, win_draws=win_draws),
+                                                    opp_decisions,
+                                                    chunksize=chunksize),
+                                total=len(opp_decisions),
+                                unit_scale=True,
+                                miniters=len(opp_decisions)/1e4,
+                                mininterval=0.2))
+
+        sleep(0.1) # fudge to make sure printouts don't get messed up
+
+    return total_payoff

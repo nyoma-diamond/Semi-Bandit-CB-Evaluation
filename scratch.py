@@ -5,17 +5,17 @@ import numpy as np
 
 from pdgraph import coordinate_to_index, allocation_by_id
 from pdgraph import build_adjacency_matrix, find_paths_allocations, prune_dead_ends
-from pdgraph import compute_expected_payoff, compute_expected_best_payoff, best_possible_payoff
+from pdgraph import expected_payoff, estimate_best_payoff, best_possible_payoff, supremum_payoff
 
 
 if __name__ == '__main__':
-    battlefields = 6
+    battlefields = 10
     N_A = 30
     N_B = 20
     N_A_est = N_A
     N_B_est = N_B
 
-    use_expected_payoff = False
+    estimate_expected_payoff = False
     A_sample_size = None
     B_sample_size = None
 
@@ -117,57 +117,81 @@ if __name__ == '__main__':
 
     print('--- Player A ---')
 
-    if use_expected_payoff:
+    if estimate_expected_payoff:
         if A_sample_size is None:
             A_decisions = find_paths_allocations(adj_mat_A, d_A, battlefields, N_A, track_progress=track_dfs)
         else:
             A_decisions = [allocation_by_id(id, battlefields, N_A) for id in random.choices(range(A_num_decisions), k=A_sample_size)]
 
-        A_expected_payoff = compute_expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=16)
+        A_expected_payoff = expected_payoff(A_decisions, np.expand_dims(B_play, axis=0), win_draws=False, chunksize=16)
+
         A_expected_regret = A_expected_payoff - A_result.sum()
+        A_estimated_expected_payoff = expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=16)
 
-    A_expected_best_payoff = compute_expected_best_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=16)
-    A_best_possible_payoff = best_possible_payoff(list(B_play), N_A, win_draws=False)
+        A_estimated_expected_regret = A_estimated_expected_payoff - A_result.sum()
 
-    A_observable_regret = A_expected_best_payoff - A_result.sum()
-    A_absolute_regret = A_best_possible_payoff - A_result.sum()
+    A_best_payoff = best_possible_payoff(B_play, N_A, win_draws=False)
+    A_best_regret = A_best_payoff - A_result.sum()
 
-    print('Actual payoff:', A_result.sum())
-    if use_expected_payoff:
+    A_estimated_best_payoff = estimate_best_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=16)
+    A_estimated_best_regret = A_estimated_best_payoff - A_result.sum()
+
+    A_supremum_payoff = supremum_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=16)
+    A_supremum_regret = A_supremum_payoff - A_result.sum()
+
+    print('Round payoff:', A_result.sum())
+
+    print('\nBest possible payoff:', A_best_payoff)
+    if estimate_expected_payoff:
         print('Expected payoff:', A_expected_payoff)
-    print('Expected best payoff:', A_expected_best_payoff)
-    print('Absolute best possible payoff:', A_best_possible_payoff, '\n')
 
-    if use_expected_payoff:
-        print('Expected regret:', A_expected_regret)
-    print('Observable regret:', A_observable_regret)
-    print('Absolute regret:', A_absolute_regret)
+    print('\nEstimated best payoff:', A_estimated_best_payoff)
+    print('Supremum payoff:', A_supremum_payoff)
+    if estimate_expected_payoff:
+        print('Estimated expected payoff:', A_estimated_expected_payoff)
+
+    print('\nEstimated best possible regret:', A_estimated_best_regret)
+    print('Supremum regret:', A_supremum_regret)
+    if estimate_expected_payoff:
+        print('Estimated expected regret:', A_estimated_expected_regret)
 
 
     print('\n--- Player B ---')
 
-    if use_expected_payoff:
+    if estimate_expected_payoff:
         if B_sample_size is None:
             B_decisions = find_paths_allocations(adj_mat_B, d_B, battlefields, N_B, track_progress=track_dfs)
         else:
             B_decisions = [allocation_by_id(id, battlefields, N_B) for id in random.choices(range(B_num_decisions), k=B_sample_size)]
 
-        B_expected_payoff = compute_expected_payoff(B_decisions, A_possible_decisions, win_draws=True, chunksize=16)
+        B_expected_payoff = expected_payoff(B_decisions, np.expand_dims(A_play, axis=0), win_draws=False, chunksize=16)
+
         B_expected_regret = B_expected_payoff - B_result.sum()
+        B_estimated_expected_payoff = expected_payoff(B_decisions, A_possible_decisions, win_draws=False, chunksize=16)
 
-    B_expected_best_payoff = compute_expected_best_payoff(A_possible_decisions, N_B, win_draws=True, chunksize=16)
-    B_best_possible_payoff = best_possible_payoff(list(A_play), N_B, win_draws=True)
+        B_estimated_expected_regret = B_estimated_expected_payoff - B_result.sum()
 
-    B_observable_regret = B_expected_best_payoff - B_result.sum()
-    B_absolute_regret = B_best_possible_payoff - B_result.sum()
+    B_best_payoff = best_possible_payoff(A_play, N_B, win_draws=False)
+    B_best_regret = B_best_payoff - B_result.sum()
 
-    print('Actual payoff:', B_result.sum())
-    if use_expected_payoff:
+    B_estimated_best_payoff = estimate_best_payoff(A_possible_decisions, N_B, win_draws=False, chunksize=16)
+    B_estimated_best_regret = B_estimated_best_payoff - B_result.sum()
+
+    B_supremum_payoff = supremum_payoff(A_possible_decisions, N_B, win_draws=False, chunksize=16)
+    B_supremum_regret = B_supremum_payoff - B_result.sum()
+
+    print('Round payoff:', B_result.sum())
+
+    print('\nBest possible payoff:', B_best_payoff)
+    if estimate_expected_payoff:
         print('Expected payoff:', B_expected_payoff)
-    print('Expected best payoff:', B_expected_best_payoff)
-    print('Absolute best possible payoff:', B_best_possible_payoff, '\n')
 
-    if use_expected_payoff:
-        print('Expected regret:', B_expected_regret)
-    print('Observable regret:', B_observable_regret)
-    print('Absolute regret:', B_absolute_regret)
+    print('\nEstimated best payoff:', B_estimated_best_payoff)
+    print('Supremum payoff:', B_supremum_payoff)
+    if estimate_expected_payoff:
+        print('Estimated expected payoff:', B_estimated_expected_payoff)
+
+    print('\nEstimated best possible regret:', B_estimated_best_regret)
+    print('Supremum regret:', B_supremum_regret)
+    if estimate_expected_payoff:
+        print('Estimated expected regret:', B_estimated_expected_regret)
