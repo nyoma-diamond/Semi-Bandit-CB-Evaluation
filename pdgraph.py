@@ -116,13 +116,19 @@ def prune_dead_ends(adj_mat: np.ndarray, prune_unreachable=False) -> np.ndarray:
     return adj_mat
 
 
+def find_subpaths_subworker(prev, adj_mat, *args, **kwargs):
+    subpaths, child = find_subpaths_allocations(adj_mat, *args, **kwargs)
+    prepend = np.full((len(subpaths), 1), adj_mat[prev, child], dtype=np.ubyte)
+    return np.concatenate((prepend, subpaths), axis=1)
+
+
 def find_subpaths_allocations(adj_mat: np.ndarray,
                               node: int,
                               dest: int,
                               visited: dict[int, np.ndarray],
                               battlefields: int,
                               N: int,
-                              pbar: tqdm = None) -> np.ndarray:
+                              pbar: tqdm = None) -> tuple[np.ndarray, int]:
     """
     Find all paths (partial allocations) between the provided nodes in the provided DAG, represented by their corresponding resource allocations
     :param node: the starting node
@@ -132,23 +138,23 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
     :param battlefields: the number of battlefields
     :param N: the number of resources available to the player
     :param pbar: tqdm progress bar for progress tracking
-    :return: all paths (partial allocations) between the provided nodes
+    :return: all paths (partial allocations) between the provided nodes, and the starting node
     """
     if node == dest:
-        return np.empty(shape=(1,0))
+        return np.empty(shape=(1,0), dtype=np.ubyte), node
     elif node not in visited.keys():
         children_start, children_end = get_child_indices(node, battlefields, N)
 
-        visited[node] = np.asarray([np.concatenate(([adj_mat[node, child]], subpath))
-                                    for child in range(children_start, children_end)
-                                    if adj_mat[node, child] != -1
-                                    for subpath in find_subpaths_allocations(adj_mat, child, dest, visited, battlefields, N, pbar)],
-                                   dtype=np.ubyte)
+        children = np.arange(children_start, children_end)
+        children = children[np.where(adj_mat[node, children] != -1)]
+
+        visited[node] = np.vstack([find_subpaths_subworker(node, adj_mat, child, dest, visited, battlefields, N, pbar)
+                                    for child in children])
 
         if pbar is not None:
             pbar.update()
 
-    return visited[node]
+    return visited[node], node
 
 
 def find_paths_allocations(adj_mat: np.ndarray,
@@ -171,7 +177,7 @@ def find_paths_allocations(adj_mat: np.ndarray,
         nodes = (adj_mat != -1).any(axis=1).sum()
         pbar = tqdm(total=nodes)
 
-    paths = find_subpaths_allocations(adj_mat, 0, dest, {}, battlefields, N, pbar)
+    paths, _ = find_subpaths_allocations(adj_mat, 0, dest, {}, battlefields, N, pbar)
 
     if track_progress:
         pbar.close()
