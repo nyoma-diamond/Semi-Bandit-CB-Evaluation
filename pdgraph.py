@@ -145,11 +145,9 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
     elif node not in visited.keys():
         children_start, children_end = get_child_indices(node, battlefields, N)
 
-        children = np.arange(children_start, children_end)
-        children = children[np.where(adj_mat[node, children] != -1)]
-
         visited[node] = np.vstack([find_subpaths_subworker(node, adj_mat, child, dest, visited, battlefields, N, pbar)
-                                    for child in children])
+                                   for child in range(children_start, children_end)
+                                   if adj_mat[node, child] != -1])
 
         if pbar is not None:
             pbar.update()
