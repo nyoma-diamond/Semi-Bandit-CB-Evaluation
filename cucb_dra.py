@@ -6,7 +6,7 @@ import numpy as np
 from pdgraph import build_adjacency_matrix, coordinate_to_index, find_paths_allocations, allocation_by_id
 
 
-class Offline_Oracle():
+class Oracle():
     def __init__(self, K: int, Q: int):
         # self.alpha = alpha
         # self.beta = beta
@@ -66,7 +66,7 @@ class CUCB_DRA():
         self.Q = Q
         self.K = K
 
-        self.oracle = Offline_Oracle(K, Q)
+        self.oracle = Oracle(K, Q)
 
         self.T = np.zeros(shape=(K, Q + 1), dtype=np.float_)  # number of times each arm has been played
         self.mu_hat = np.zeros(shape=(K, Q + 1), dtype=np.float_)  # empirical mean of reward function
