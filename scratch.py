@@ -9,7 +9,7 @@ from pdgraph import expected_payoff, estimate_best_payoff, best_possible_payoff,
 
 
 if __name__ == '__main__':
-    battlefields = 10
+    battlefields = 15
     N_A = 30
     N_B = 20
     N_A_est = N_A
@@ -20,6 +20,7 @@ if __name__ == '__main__':
     B_sample_size = None
 
     track_dfs = True
+    chunksize = 32
 
 
     print('===== Parameters =====')
@@ -123,20 +124,20 @@ if __name__ == '__main__':
         else:
             A_decisions = [allocation_by_id(id, battlefields, N_A) for id in random.choices(range(A_num_decisions), k=A_sample_size)]
 
-        A_expected_payoff = expected_payoff(A_decisions, np.expand_dims(B_play, axis=0), win_draws=False, chunksize=16)
+        A_expected_payoff = expected_payoff(A_decisions, np.expand_dims(B_play, axis=0), win_draws=False, chunksize=chunksize)
 
         A_expected_regret = A_expected_payoff - A_result.sum()
-        A_estimated_expected_payoff = expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=16)
+        A_estimated_expected_payoff = expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=chunksize)
 
         A_estimated_expected_regret = A_estimated_expected_payoff - A_result.sum()
 
     A_best_payoff = best_possible_payoff(B_play, N_A, win_draws=False)
     A_best_regret = A_best_payoff - A_result.sum()
 
-    A_estimated_best_payoff = estimate_best_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=16)
+    A_estimated_best_payoff = estimate_best_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=chunksize)
     A_estimated_best_regret = A_estimated_best_payoff - A_result.sum()
 
-    A_supremum_payoff = supremum_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=16)
+    A_supremum_payoff = supremum_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=chunksize)
     A_supremum_regret = A_supremum_payoff - A_result.sum()
 
     print('Round payoff:', A_result.sum())
@@ -164,20 +165,20 @@ if __name__ == '__main__':
         else:
             B_decisions = [allocation_by_id(id, battlefields, N_B) for id in random.choices(range(B_num_decisions), k=B_sample_size)]
 
-        B_expected_payoff = expected_payoff(B_decisions, np.expand_dims(A_play, axis=0), win_draws=False, chunksize=16)
+        B_expected_payoff = expected_payoff(B_decisions, np.expand_dims(A_play, axis=0), win_draws=False, chunksize=chunksize)
 
         B_expected_regret = B_expected_payoff - B_result.sum()
-        B_estimated_expected_payoff = expected_payoff(B_decisions, A_possible_decisions, win_draws=False, chunksize=16)
+        B_estimated_expected_payoff = expected_payoff(B_decisions, A_possible_decisions, win_draws=False, chunksize=chunksize)
 
         B_estimated_expected_regret = B_estimated_expected_payoff - B_result.sum()
 
     B_best_payoff = best_possible_payoff(A_play, N_B, win_draws=False)
     B_best_regret = B_best_payoff - B_result.sum()
 
-    B_estimated_best_payoff = estimate_best_payoff(A_possible_decisions, N_B, win_draws=False, chunksize=16)
+    B_estimated_best_payoff = estimate_best_payoff(A_possible_decisions, N_B, win_draws=False, chunksize=chunksize)
     B_estimated_best_regret = B_estimated_best_payoff - B_result.sum()
 
-    B_supremum_payoff = supremum_payoff(A_possible_decisions, N_B, win_draws=False, chunksize=16)
+    B_supremum_payoff = supremum_payoff(A_possible_decisions, N_B, win_draws=False, chunksize=chunksize)
     B_supremum_regret = B_supremum_payoff - B_result.sum()
 
     print('Round payoff:', B_result.sum())
