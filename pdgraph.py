@@ -347,7 +347,7 @@ def make_discrete_allocation(allocation: np.ndarray, N: int):
     rem = np.mod(allocation, 1)
     discrete = np.floor(allocation).astype(int)
 
-    flips = np.random.choice(np.arange(0,rem.size),
+    flips = np.random.choice(np.arange(rem.size),
                              size=int(N-sum(discrete)),
                              replace=False,
                              p=softmax(rem))

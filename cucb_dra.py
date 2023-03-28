@@ -83,12 +83,12 @@ class CUCB_DRA():
 
         allocation = self.oracle.generate_decision(mu_bar)
 
+        self.t += 1
+        self.T[np.arange(allocation.size), allocation] += 1
+        self.plays = np.append(self.plays, np.expand_dims(allocation, axis=0), axis=0)
+
         return allocation
 
-    def play_decision(self, decision):
-        self.t += 1
-        self.T[np.arange(decision.size), decision] += 1
-        self.plays = np.append(self.plays, np.expand_dims(decision, axis=0), axis=0)
 
     def update(self, reward):
         decision = self.plays[-1]
@@ -111,8 +111,7 @@ if __name__ == '__main__':
     for _ in range(20):
         print()
         allocation = player.generate_decision()
-        print('Player\'s allocation:', allocation)
-        player.play_decision(allocation)
+        print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
 
         opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, Q_opp))
         print('Opponent\'s allocation:', opp_allocation)
