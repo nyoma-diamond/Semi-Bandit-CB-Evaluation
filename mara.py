@@ -1,6 +1,10 @@
+import random
+
 import numpy as np
-from math import exp, sqrt, log
+from math import exp, sqrt, log, comb
 from random import choice
+
+from pdgraph import allocation_by_id, make_discrete_allocation
 
 
 class MARA:
@@ -103,7 +107,7 @@ if __name__ == '__main__':
 
     player = MARA(2.5, battlefields)
 
-    for i in range(100):
+    for i in range(20):
         print()
         allocation = player.generate_decision()
         print(f'Player\'s allocation: {allocation} (total: {allocation.sum()})')
@@ -116,3 +120,26 @@ if __name__ == '__main__':
         print(f'Payoffs: {X} (total: {X.sum()})')
 
         player.update(X)
+
+
+    N = 15
+    N_opp = 20
+
+    opp_num_decisions = comb(battlefields + N_opp - 1, battlefields - 1)
+
+    for _ in range(20):
+        print()
+        allocation = player.generate_decision()
+        print(f'Player\'s allocation: {allocation}')
+        discrete = make_discrete_allocation(allocation, N)
+        print(f'Discretized allocation: {discrete} (total: {sum(discrete)})')
+
+        opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, N_opp))
+        print('Opponent\'s allocation:', opp_allocation)
+
+        result = np.greater(discrete, opp_allocation)
+        print('Result:', result)
+        print('Payoff:', sum(result))
+
+        player.update(result)
+

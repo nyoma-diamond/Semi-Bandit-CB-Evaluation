@@ -104,6 +104,6 @@ if __name__ == '__main__':
         print('Success probabilities:', p)
 
         X = np.random.binomial(1, p)
-        print('Payoff:', X.sum())
+        print('Payoff:', sum(X))
 
         player.update(X)

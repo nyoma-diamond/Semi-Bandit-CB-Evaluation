@@ -4,6 +4,7 @@ from tqdm import tqdm
 import multiprocessing as mp
 from functools import partial
 from time import sleep
+from scipy.special import softmax
 
 def coordinate_to_index(coordinate: tuple[int,int], battlefields: int, N: int) -> int:
     """
@@ -333,3 +334,23 @@ def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksiz
         sleep(0.1) # fudge to make sure printouts don't get messed up
 
     return total_payoff
+
+def make_discrete_allocation(allocation: np.ndarray, N: int):
+    """
+    Converts a set of continuous allocations to discrete allocations
+    NOTE: remainders are treated as proportional probability of having the "partial" resource
+    :param allocation: continuous allocations to convert (assumed to sum to 1)
+    :param N: total resources available
+    :return: discrete allocations
+    """
+    allocation *= N
+    rem = np.mod(allocation, 1)
+    discrete = np.floor(allocation).astype(int)
+
+    flips = np.random.choice(np.arange(0,rem.size),
+                             size=int(N-sum(discrete)),
+                             replace=False,
+                             p=softmax(rem))
+    discrete[flips] += 1
+
+    return discrete

@@ -119,6 +119,6 @@ if __name__ == '__main__':
 
         result = np.greater(allocation, opp_allocation)
         print('Result:', result)
-        print('Payoff:', result.sum())
+        print('Payoff:', sum(result))
 
         player.update(result)
