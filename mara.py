@@ -101,9 +101,9 @@ if __name__ == '__main__':
 
     v = np.array([0.1, 0.5, 0.2, 0.3, 0.4], dtype=np.float_)
 
-    player = MARA(3, battlefields)
+    player = MARA(2.5, battlefields)
 
-    for i in range(20):
+    for i in range(100):
         print()
         allocation = player.generate_decision()
         print(f'Player\'s allocation: {allocation} (total: {allocation.sum()})')
