@@ -42,8 +42,6 @@ class MARA:
         resource = 1
 
         r_t = np.empty(shape=self.K)
-        # r_t = np.where(self.v_det[-1] > 0, self.c * self.v_det[-1] * exp(-self.s_det[-1] / (self.c*self.v_det[-1])), 0)
-
         M_t = np.empty(shape=self.K)
 
         v_max = np.maximum(self.v_det[-1], self.v_prob[-1])
