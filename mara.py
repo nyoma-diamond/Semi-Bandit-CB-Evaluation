@@ -8,7 +8,7 @@ class MARA:
     Resource-allocation algorithm for the multi-armed problem from Dagan and Crammer. (https://proceedings.mlr.press/v83/dagan18a)
     """
 
-    def __init__(self, c: int, K: int):
+    def __init__(self, c: float, K: int):
         """
         Multi-Armed Resource-Allocation algorithm
         :param c: arbitrary coefficient >2 for computing allocation offset r
