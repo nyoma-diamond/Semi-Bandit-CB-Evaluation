@@ -7,7 +7,7 @@ import scipy.sparse as sci
 from pdgraph import allocation_by_id
 
 
-class Edge():
+class Edge:
     """
     Edge algorithm from Vu et al. (https://doi.org/10.1109/CDC40024.2019.9029186 and https://doi.org/10.48550/arXiv.1909.04912)
     Much of this code is based on the implementation at https://github.com/dongquan11/BanditColonelBlotto
