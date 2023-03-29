@@ -10,7 +10,7 @@ from pdgraph import allocation_by_id
 class Edge:
     """
     Edge algorithm from Vu et al. (https://doi.org/10.1109/CDC40024.2019.9029186 and https://doi.org/10.48550/arXiv.1909.04912)
-    Much of this code is based on the implementation at https://github.com/dongquan11/BanditColonelBlotto
+    This is a modified implementation of the code available at https://github.com/dongquan11/BanditColonelBlotto
     """
 
     def __init__(self, n: int, m: int, gamma: float):
@@ -77,31 +77,31 @@ class Edge:
         if u == 0:
             return int(0)
         elif u == self.N - 1:
-            return int(n)
+            return int(self.n)
         else:
-            return int(np.floor((u-1)/(m+1))+1)
+            return int(np.floor((u-1)/(self.m+1))+1)
 
 
     def Vertical(self, u):
         if u == 0:
             Vertical = 0
         elif u == self.N - 1:
-            Vertical = int(m)
-        elif np.remainder(u, m+1) == 0:
-            Vertical = m
+            Vertical = int(self.m)
+        elif np.remainder(u, self.m+1) == 0:
+            Vertical = self.m
         else:
-            Vertical = np.remainder(u, m+1) - 1
+            Vertical = np.remainder(u, self.m+1) - 1
         return Vertical
 
 
     def Children(self, u):
         if u == 0:
-            children = np.arange(1, m+2)
-        elif u >= self.N-1-(m+1):
+            children = np.arange(1, self.m+2)
+        elif u >= self.N-1-(self.m+1):
             children = np.array([self.N-1])
         else:
-            temp = range(0, m+1-self.Vertical(u))
-            children = (u+m+1)*np.ones(m+1-self.Vertical(u))
+            temp = range(self.m+1-self.Vertical(u))
+            children = (u+self.m+1)*np.ones(self.m+1-self.Vertical(u))
             children = children + temp
         return children.astype(int)
 
@@ -113,7 +113,7 @@ class Edge:
             ancestor = [0]
         else:
             ancestor = [0]
-            for i in range(1,u-m):
+            for i in range(1,u-self.m):
                 if self.Vertical(i) <= self.Vertical(u):
                     ancestor.append(i)
         return ancestor
@@ -125,9 +125,9 @@ class Edge:
         elif u2 == self.N - 1:
             edge = self.E - (self.N-1-u1)
         else:
-            edge = int(m + 1 +
-                       (self.Layer(u1)-1)*(m+2)*(m+1)/2 +
-                       (2*(m+1) - self.Vertical(u1)+1)*self.Vertical(u1)/2 +
+            edge = int(self.m + 1 +
+                       (self.Layer(u1)-1)*(self.m+2)*(self.m+1)/2 +
+                       (2*(self.m+1) - self.Vertical(u1)+1)*self.Vertical(u1)/2 +
                        (self.Vertical(u2)-self.Vertical(u1)))
         return edge
 
@@ -160,7 +160,7 @@ class Edge:
     def exploit(self):
         node_k_1 = 0
         chosen_path = np.array([0])
-        while len(chosen_path) <= n:
+        while len(chosen_path) <= self.n:
             prob = np.array([])
             for k in self.Children_s[node_k_1]:
                 prob = np.append(prob, [self.w[int(self.node_edge[node_k_1,k])] * self.H[k,self.N-1] / self.H[node_k_1,self.N-1]])
@@ -174,7 +174,7 @@ class Edge:
     def explore(self):
         node_k_1 = 0
         chosen_path = np.array([0])
-        while len(chosen_path) <= n:
+        while len(chosen_path) <= self.n:
             node_k = np.random.choice(self.Children_s[node_k_1], p = self.Prob_explore[node_k_1])
             chosen_path = np.append(chosen_path, node_k)
             node_k_1 = node_k
@@ -192,12 +192,12 @@ class Edge:
 
 
     def bin_path(self, p):
-        path_temp = np.zeros(shape=(n,2))
-        for i in range(0,n):
+        path_temp = np.zeros(shape=(self.n,2))
+        for i in range(self.n):
             path_temp[i]=[p[i],p[i+1]]
 
         bin_paths = np.zeros(self.E)
-        for j in range(0, self.E):
+        for j in range(self.E):
             if any(np.equal(path_temp, self.edge_node[j]).all(1)) == 1:
                 bin_paths[j] = 1
         return bin_paths
@@ -226,25 +226,25 @@ class Edge:
 
 
 if __name__ == '__main__':
-    n = 5 # battlefields
-    m = 15 # resources
-    m_opp = 15
+    battlefields = 5 # battlefields
+    resources = 15 # resources
+    opp_resources = 15
 
-    opp_num_decisions = comb(n + m_opp - 1, n - 1)
+    opp_num_decisions = comb(battlefields + opp_resources - 1, battlefields - 1)
 
-    player = Edge(n, m, 0.5)
+    player = Edge(battlefields, resources, 0.5)
 
     for _ in range(30):
         print()
         allocation = player.generate_decision()
         print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
 
-        opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), n, m_opp))
+        opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
         print('Opponent\'s allocation:', opp_allocation)
 
         result = np.greater(allocation, opp_allocation)
         print('Result:', result)
         print('Payoff:', sum(result))
-        print('Loss:', (n-sum(result))/n)
+        print('Loss:', (battlefields-sum(result))/battlefields)
 
-        player.update((n-sum(result))/n)
+        player.update((battlefields-sum(result))/battlefields)
