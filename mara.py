@@ -62,6 +62,8 @@ class MARA:
 
             resource -= M_t[k]
 
+        # M_t /= sum(M_t)  # normalize in case not all resources have been allocated
+
         self.r = np.append(self.r, np.expand_dims(r_t, axis=0), axis=0)
         self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
         self.t += 1
@@ -96,7 +98,7 @@ class MARA:
 if __name__ == '__main__':
     battlefields = 5
 
-    v = np.array([0.1, 0.5, 0.2, 0.3, 0.4], dtype=np.float_)
+    v = np.array([0.1, 0.05, 0.2, 0.03, 0.4], dtype=np.float_)
 
     player = MARA(2.5, battlefields)
 
@@ -117,12 +119,14 @@ if __name__ == '__main__':
     resources = 15
     opp_resources = 20
 
+    player = MARA(2.5, battlefields)
+
     opp_num_decisions = comb(battlefields + opp_resources - 1, battlefields - 1)
 
     for _ in range(20):
         print()
         allocation = player.generate_decision()
-        print(f'Player\'s allocation: {allocation}')
+        print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
         discrete = make_discrete_allocation(allocation, resources)
         print(f'Discretized allocation: {discrete} (total: {sum(discrete)})')
 
