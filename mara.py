@@ -12,16 +12,18 @@ class MARA:
     Resource-allocation algorithm for the multi-armed problem from Dagan and Crammer. (https://proceedings.mlr.press/v83/dagan18a)
     """
 
-    def __init__(self, c: float, K: int):
+    def __init__(self, c: float, K: int, resources=None):
         """
         Multi-Armed Resource-Allocation algorithm initializer
         :param c: arbitrary coefficient >2 for computing allocation offset r
         :param K: the number of jobs (battlefields)
+        :param resources: discrete resources to use (None by default; use continuous allocation)
         """
         if c <= 2:
             raise ValueError('c must be greater than 2')
         self.c = c
         self.K = K
+        self.resources = resources
 
         self.v_prob = np.zeros(shape=(1, K))
         self.v_det = np.zeros(shape=(1, K))
@@ -67,6 +69,10 @@ class MARA:
         self.r = np.append(self.r, np.expand_dims(r_t, axis=0), axis=0)
         self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
         self.t += 1
+
+        if self.resources is not None:
+            M_t /= sum(M_t)  # normalize in case not all resources have been allocated
+            M_t = make_discrete_allocation(M_t, self.resources)
 
         return M_t
 
@@ -119,7 +125,7 @@ if __name__ == '__main__':
     resources = 15
     opp_resources = 20
 
-    player = MARA(2.5, battlefields)
+    player = MARA(2.5, battlefields, resources)
 
     opp_num_decisions = comb(battlefields + opp_resources - 1, battlefields - 1)
 
@@ -127,13 +133,11 @@ if __name__ == '__main__':
         print()
         allocation = player.generate_decision()
         print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
-        discrete = make_discrete_allocation(allocation, resources)
-        print(f'Discretized allocation: {discrete} (total: {sum(discrete)})')
 
         opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
         print('Opponent\'s allocation:', opp_allocation)
 
-        result = np.greater(discrete, opp_allocation)
+        result = np.greater(allocation, opp_allocation)
         print('Result:', result)
         print('Payoff:', sum(result))
 

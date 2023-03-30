@@ -11,15 +11,17 @@ class Optimistic_Allocation:
     Optimistic Allocation algorithm from Lattimore et al. (https://arxiv.org/pdf/1406.3840.pdf)
     """
 
-    def __init__(self, n: int, K: int, v_lb: np.ndarray):
+    def __init__(self, n: int, K: int, v_lb: np.ndarray, resources=None):
         """
         Optimistic Allocation initializer
         :param n: time horizon
         :param K: the number of jobs (battlefields)
         :param v_lb: initial estimated lower bounds on v for each battlefield
+        :param resources: discrete resources to use (None by default; use continuous allocation)
         """
         self.K = K
         self.v_lb = np.expand_dims(v_lb, axis=0)
+        self.resources = resources
 
         self.delta = (n * K) ** (-2)
         self.v_ub = np.full_like(self.v_lb, np.inf)
@@ -44,10 +46,12 @@ class Optimistic_Allocation:
             k = args[cur_v_lb[args].argmin()]
             M_t[k] = min(cur_v_lb[k], 1 - np.sum(M_t))
 
-        M_t /= sum(M_t)  # normalize in case not all resources have been allocated
-
         self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
         self.t += 1
+
+        if self.resources is not None:
+            M_t /= sum(M_t)  # normalize in case not all resources have been allocated
+            M_t = make_discrete_allocation(M_t, self.resources)
 
         return M_t
 
@@ -88,9 +92,9 @@ if __name__ == '__main__':
     battlefields = 5
     horizon = 10
 
-    v = np.array([0.1, 0.5, 0.2, 0.3, 0.4], dtype=np.float_)
+    v = np.array([0.1, 0.03, 0.2, 0.15, 0.4], dtype=np.float_)
 
-    player = Optimistic_Allocation(horizon, battlefields, np.array([0.09, 0.4, 0.15, 0.25, 0.3]))
+    player = Optimistic_Allocation(horizon, battlefields, np.array([0.09, 0.01, 0.15, 0.1, 0.3]))
 
     for i in range(horizon):
         print()
@@ -108,21 +112,19 @@ if __name__ == '__main__':
     resources = 15
     opp_resources = 20
 
-    player = Optimistic_Allocation(horizon, battlefields, np.array([0.01, 0.02, 0.03, 0.04, 0.05]))
+    player = Optimistic_Allocation(horizon, battlefields, np.array([0.01, 0.02, 0.03, 0.04, 0.05]), resources)
 
     opp_num_decisions = comb(battlefields + opp_resources - 1, battlefields - 1)
 
     for _ in range(horizon):
         print()
         allocation = player.generate_decision()
-        print(f'Player\'s allocation: {allocation}')
-        discrete = make_discrete_allocation(allocation, resources)
-        print(f'Discretized allocation: {discrete} (total: {sum(discrete)})')
+        print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
 
         opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
         print('Opponent\'s allocation:', opp_allocation)
 
-        result = np.greater(discrete, opp_allocation)
+        result = np.greater(allocation, opp_allocation)
         print('Result:', result)
         print('Payoff:', sum(result))
 
