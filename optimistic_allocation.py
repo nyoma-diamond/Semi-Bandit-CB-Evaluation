@@ -1,3 +1,4 @@
+import sys
 import random
 from math import comb
 
@@ -11,17 +12,21 @@ class Optimistic_Allocation:
     Optimistic Allocation algorithm from Lattimore et al. (https://arxiv.org/pdf/1406.3840.pdf)
     """
 
-    def __init__(self, n: int, K: int, v_lb: np.ndarray, resources=None):
+    def __init__(self, K: int, n: int = sys.maxsize, v_lb: np.ndarray = None, m: int = None):
         """
         Optimistic Allocation initializer
-        :param n: time horizon
         :param K: the number of jobs (battlefields)
+        :param n: time horizon (treated as system maxint if not provided)
         :param v_lb: initial estimated lower bounds on v for each battlefield
-        :param resources: discrete resources to use (None by default; use continuous allocation)
+        :param m: discrete resources to use (None by default; use continuous allocation)
         """
         self.K = K
+        self.resources = m
+
+        if v_lb is None:
+            v_lb = np.arange(K) * 1e-3 + 1e-3
+
         self.v_lb = np.expand_dims(v_lb, axis=0)
-        self.resources = resources
 
         self.delta = (n * K) ** (-2)
         self.v_ub = np.full_like(self.v_lb, np.inf)
@@ -90,11 +95,11 @@ class Optimistic_Allocation:
 
 if __name__ == '__main__':
     battlefields = 5
-    horizon = 10
+    horizon = 100
 
-    v = np.array([0.1, 0.03, 0.2, 0.15, 0.4], dtype=np.float_)
+    v = np.array([0.1, 0.5, 0.2, 0.15, 0.4], dtype=np.float_)
 
-    player = Optimistic_Allocation(horizon, battlefields, np.array([0.09, 0.01, 0.15, 0.1, 0.3]))
+    player = Optimistic_Allocation(battlefields, horizon)
 
     for i in range(horizon):
         print()
@@ -112,7 +117,7 @@ if __name__ == '__main__':
     resources = 15
     opp_resources = 20
 
-    player = Optimistic_Allocation(horizon, battlefields, np.array([0.01, 0.02, 0.03, 0.04, 0.05]), resources)
+    player = Optimistic_Allocation(battlefields, horizon, m=resources)
 
     opp_num_decisions = comb(battlefields + opp_resources - 1, battlefields - 1)
 
@@ -121,7 +126,8 @@ if __name__ == '__main__':
         allocation = player.generate_decision()
         print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
 
-        opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
+        opp_allocation = np.asarray(
+            allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
         print('Opponent\'s allocation:', opp_allocation)
 
         result = np.greater(allocation, opp_allocation)

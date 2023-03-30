@@ -64,8 +64,6 @@ class MARA:
 
             resource -= M_t[k]
 
-        # M_t /= sum(M_t)  # normalize in case not all resources have been allocated
-
         self.r = np.append(self.r, np.expand_dims(r_t, axis=0), axis=0)
         self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
         self.t += 1
@@ -104,7 +102,7 @@ class MARA:
 if __name__ == '__main__':
     battlefields = 5
 
-    v = np.array([0.1, 0.05, 0.2, 0.03, 0.4], dtype=np.float_)
+    v = np.array([0.1, 0.05, 0.2, 0.15, 0.4], dtype=np.float_)
 
     player = MARA(2.5, battlefields)
 
@@ -118,7 +116,7 @@ if __name__ == '__main__':
         print('Expected payoff: ', p.sum())
 
         X = np.random.binomial(1, p)
-        print(f'Payoffs: {X} (total: {X.sum()})')
+        print(f'Payoffs: {X} (total: {sum(X)})')
 
         player.update(X)
 
