@@ -16,15 +16,14 @@ class Optimistic_Allocation:
         self.K = K
         self.v_lb = np.expand_dims(v_lb, axis=0)
 
-        self.delta = (n*K)**(-2)
+        self.delta = (n * K) ** (-2)
         self.v_ub = np.full_like(self.v_lb, np.inf)
 
-        self.M = np.empty(shape=(0,K))
-        self.X = np.empty(shape=(0,K))
-        self.w = np.empty(shape=(0,K))
+        self.M = np.empty(shape=(0, K))
+        self.X = np.empty(shape=(0, K))
+        self.w = np.empty(shape=(0, K))
 
         self.t = 0
-
 
     def play_decision(self, M_t):
         """
@@ -33,7 +32,6 @@ class Optimistic_Allocation:
         """
         self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
         self.t += 1
-
 
     def generate_decision(self):
         """
@@ -47,10 +45,9 @@ class Optimistic_Allocation:
         for i in range(self.K):
             args = np.argwhere(M_t == 0)
             k = args[cur_v_lb[args].argmin()]
-            M_t[k] = min(cur_v_lb[k], 1-np.sum(M_t))
+            M_t[k] = min(cur_v_lb[k], 1 - np.sum(M_t))
 
         return M_t
-
 
     def update(self, X_t: np.ndarray):
         """
@@ -76,14 +73,12 @@ class Optimistic_Allocation:
         self.v_lb = np.append(self.v_lb, np.expand_dims(np.reciprocal(v_lb_inv_t), axis=0), axis=0)
         self.v_ub = np.append(self.v_ub, np.expand_dims(np.reciprocal(v_ub_inv_t), axis=0), axis=0)
 
-
     def f(self, R_t, V_sq_t):
-        delta_0 = self.delta / (3 * np.square(R_t+1) * np.square(V_sq_t+1))
+        delta_0 = self.delta / (3 * np.square(R_t + 1) * np.square(V_sq_t + 1))
 
-        return ((R_t+1) / 3) * np.log(2/delta_0) + \
-            np.sqrt(2 * np.square(V_sq_t+1) * np.log(2/delta_0) + np.square((R_t+1)/3) * np.square(np.log(2/delta_0)))
-
-
+        return (((R_t + 1) / 3) * np.log(2 / delta_0)
+                + np.sqrt(2 * np.square(V_sq_t + 1) * np.log(2 / delta_0)
+                          + np.square((R_t + 1) / 3) * np.square(np.log(2 / delta_0))))
 
 
 if __name__ == '__main__':

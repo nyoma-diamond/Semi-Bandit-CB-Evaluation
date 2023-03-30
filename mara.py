@@ -23,16 +23,15 @@ class MARA:
         self.c = c
         self.K = K
 
-        self.v_prob = np.zeros(shape=(1,K))
-        self.v_det = np.zeros(shape=(1,K))
+        self.v_prob = np.zeros(shape=(1, K))
+        self.v_det = np.zeros(shape=(1, K))
 
-        self.s_det = np.empty(shape=(0,K))
-        self.r = np.empty(shape=(0,K))
-        self.M = np.empty(shape=(0,K))
-        self.X = np.empty(shape=(0,K))
+        self.s_det = np.empty(shape=(0, K))
+        self.r = np.empty(shape=(0, K))
+        self.M = np.empty(shape=(0, K))
+        self.X = np.empty(shape=(0, K))
 
         self.t = 1
-
 
     def generate_decision(self):
         """
@@ -47,17 +46,17 @@ class MARA:
         v_max = np.maximum(self.v_det[-1], self.v_prob[-1])
 
         for k in np.argsort(v_max):
-            if self.v_det[-1,k] > 0:
-                r_t[k] = self.c * self.v_det[-1,k] * exp(-self.s_det[-1,k] / (self.c*self.v_det[-1,k]))
+            if self.v_det[-1, k] > 0:
+                r_t[k] = self.c * self.v_det[-1, k] * exp(-self.s_det[-1, k] / (self.c * self.v_det[-1, k]))
             else:
                 r_t[k] = 0
 
-            if self.v_det[-1,k] == 0:
-                M_t[k] = 1 / (self.K * (2**(self.t-1)))
-            elif resource >= self.v_det[-1,k] + r_t[k]:
-                M_t[k] = self.v_det[-1,k] + r_t[k]
-            elif self.v_det[-1,k] < resource:  # NOTE: paper also checks < self.v_det[-1,k] + r_t[k] here, but this is unnecessary due to the previous elif
-                M_t[k] = choice([self.v_det[-1,k], resource])
+            if self.v_det[-1, k] == 0:
+                M_t[k] = 1 / (self.K * (2 ** (self.t - 1)))
+            elif resource >= self.v_det[-1, k] + r_t[k]:
+                M_t[k] = self.v_det[-1, k] + r_t[k]
+            elif self.v_det[-1, k] < resource:  # NOTE: paper also checks < self.v_det[-1,k] + r_t[k] here, but this is unnecessary due to the previous elif
+                M_t[k] = choice([self.v_det[-1, k], resource])
             else:
                 M_t[k] = resource
 
@@ -68,8 +67,6 @@ class MARA:
         self.t += 1
 
         return M_t
-
-
 
     def update(self, X_t: np.ndarray):
         """
@@ -84,18 +81,16 @@ class MARA:
 
         x_prob_t = np.sum(self.X, axis=0, where=(self.M <= self.v_det))
 
-        eps_t = (self.t**-3)*(self.K**-1)
-        zeta_t = (sqrt(1/2)+sqrt(1/2-log(eps_t)))**2
+        eps_t = (self.t ** -3) * (self.K ** -1)
+        zeta_t = (sqrt(1 / 2) + sqrt(1 / 2 - log(eps_t))) ** 2
 
         v_det_t = np.amax(self.M, axis=0, initial=0, where=(self.X == 0))
         with np.errstate(divide='ignore', invalid='ignore'):
-            v_prob_t = np.where(s_prob_t > 0, np.power(np.sqrt(zeta_t / (2*s_prob_t)) + np.sqrt((zeta_t / (2*s_prob_t)) + (x_prob_t / s_prob_t)), -2), 0)
+            v_prob_t = np.where(s_prob_t > 0, np.power(np.sqrt(zeta_t / (2 * s_prob_t)) + np.sqrt((zeta_t / (2 * s_prob_t)) + (x_prob_t / s_prob_t)), -2), 0)
 
         self.s_det = np.append(self.s_det, np.expand_dims(s_det_t, axis=0), axis=0)
         self.v_det = np.append(self.v_det, np.expand_dims(v_det_t, axis=0), axis=0)
         self.v_prob = np.append(self.v_prob, np.expand_dims(v_prob_t, axis=0), axis=0)
-
-
 
 
 if __name__ == '__main__':
@@ -119,7 +114,6 @@ if __name__ == '__main__':
 
         player.update(X)
 
-
     N = 15
     N_opp = 20
 
@@ -140,4 +134,3 @@ if __name__ == '__main__':
         print('Payoff:', sum(result))
 
         player.update(result)
-

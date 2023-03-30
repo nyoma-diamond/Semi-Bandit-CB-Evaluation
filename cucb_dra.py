@@ -6,25 +6,19 @@ import numpy as np
 from pdgraph import build_adjacency_matrix, coordinate_to_index, find_paths_allocations, allocation_by_id
 
 
-class Oracle():
+class Oracle:
     def __init__(self, K: int, Q: int):
-        # self.alpha = alpha
-        # self.beta = beta
-
         adj_mat = build_adjacency_matrix(K, Q)
         d = coordinate_to_index((K, Q), K, Q)
 
         self.action_set = find_paths_allocations(adj_mat, d, K, Q, track_progress=True)
 
         def expand(arr):
-            new = np.zeros((K, Q+1))
+            new = np.zeros((K, Q + 1))
             new[np.arange(0, arr.size), arr] = 1
             return new
 
         self.expanded_action_set = np.apply_along_axis(expand, 1, self.action_set)
-
-
-
 
     def r(self, a: np.ndarray, D: np.ndarray):
         """
@@ -57,7 +51,7 @@ class Oracle():
         return self.action_set[self.opt(D)[0]]
 
 
-class CUCB_DRA():
+class CUCB_DRA:
     """
     Online CUCB_DRA algorithm from Zuo and Joe-Wong (https://doi.org/10.1109/CISS50987.2021.9400228)
     """
@@ -79,7 +73,7 @@ class CUCB_DRA():
         with np.errstate(divide='ignore', invalid='ignore'):
             rho = np.nan_to_num(np.sqrt(3 * math.log(self.t) / (2 * self.T)), nan=np.inf, posinf=np.inf)  # Confidence radius
 
-        mu_bar = self.mu_hat + rho  # upper confidence bound
+        mu_bar = self.mu_hat + rho
 
         allocation = self.oracle.generate_decision(mu_bar)
 
@@ -88,7 +82,6 @@ class CUCB_DRA():
         self.plays = np.append(self.plays, np.expand_dims(allocation, axis=0), axis=0)
 
         return allocation
-
 
     def update(self, reward):
         decision = self.plays[-1]
@@ -101,19 +94,19 @@ class CUCB_DRA():
 
 if __name__ == '__main__':
     battlefields = 5
-    Q = 15
-    Q_opp = 20
+    resources = 15
+    opp_resources = 20
 
-    opp_num_decisions = math.comb(battlefields + Q_opp - 1, battlefields - 1)
+    opp_num_decisions = math.comb(battlefields + opp_resources - 1, battlefields - 1)
 
-    player = CUCB_DRA(Q, battlefields)
+    player = CUCB_DRA(resources, battlefields)
 
     for _ in range(20):
         print()
         allocation = player.generate_decision()
         print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
 
-        opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, Q_opp))
+        opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
         print('Opponent\'s allocation:', opp_allocation)
 
         result = np.greater(allocation, opp_allocation)
