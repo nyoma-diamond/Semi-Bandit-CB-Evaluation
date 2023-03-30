@@ -1,4 +1,9 @@
+import random
+from math import comb
+
 import numpy as np
+
+from pdgraph import make_discrete_allocation, allocation_by_id
 
 
 class Optimistic_Allocation:
@@ -25,14 +30,6 @@ class Optimistic_Allocation:
 
         self.t = 0
 
-    def play_decision(self, M_t):
-        """
-        Play a decision
-        :param M_t: decision to make
-        """
-        self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
-        self.t += 1
-
     def generate_decision(self):
         """
         Generate an allocation decision
@@ -46,6 +43,11 @@ class Optimistic_Allocation:
             args = np.argwhere(M_t == 0)
             k = args[cur_v_lb[args].argmin()]
             M_t[k] = min(cur_v_lb[k], 1 - np.sum(M_t))
+
+        M_t /= sum(M_t)  # normalize in case not all resources have been allocated
+
+        self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
+        self.t += 1
 
         return M_t
 
@@ -67,11 +69,12 @@ class Optimistic_Allocation:
 
         epsilon_t = self.f(R_t, V_hat_sq_t)
 
-        v_lb_inv_t = np.minimum(np.reciprocal(self.v_lb[-1]), v_hat_inv_t + epsilon_t)
-        v_ub_inv_t = np.maximum(np.reciprocal(self.v_ub[-1]), v_hat_inv_t - epsilon_t)
+        with np.errstate(divide='ignore'):
+            v_lb_inv_t = np.minimum(np.reciprocal(self.v_lb[-1]), v_hat_inv_t + epsilon_t)
+            v_ub_inv_t = np.maximum(np.reciprocal(self.v_ub[-1]), v_hat_inv_t - epsilon_t)
 
-        self.v_lb = np.append(self.v_lb, np.expand_dims(np.reciprocal(v_lb_inv_t), axis=0), axis=0)
-        self.v_ub = np.append(self.v_ub, np.expand_dims(np.reciprocal(v_ub_inv_t), axis=0), axis=0)
+            self.v_lb = np.append(self.v_lb, np.expand_dims(np.reciprocal(v_lb_inv_t), axis=0), axis=0)
+            self.v_ub = np.append(self.v_ub, np.expand_dims(np.reciprocal(v_ub_inv_t), axis=0), axis=0)
 
     def f(self, R_t, V_sq_t):
         delta_0 = self.delta / (3 * np.square(R_t + 1) * np.square(V_sq_t + 1))
@@ -92,8 +95,7 @@ if __name__ == '__main__':
     for i in range(horizon):
         print()
         allocation = player.generate_decision()
-        print('Player\'s allocation:', allocation)
-        player.play_decision(allocation)
+        print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
 
         p = np.minimum(1, allocation / v)
         print('Success probabilities:', p)
@@ -102,3 +104,26 @@ if __name__ == '__main__':
         print('Payoff:', sum(X))
 
         player.update(X)
+
+    resources = 15
+    opp_resources = 20
+
+    player = Optimistic_Allocation(horizon, battlefields, np.array([0.01, 0.02, 0.03, 0.04, 0.05]))
+
+    opp_num_decisions = comb(battlefields + opp_resources - 1, battlefields - 1)
+
+    for _ in range(horizon):
+        print()
+        allocation = player.generate_decision()
+        print(f'Player\'s allocation: {allocation}')
+        discrete = make_discrete_allocation(allocation, resources)
+        print(f'Discretized allocation: {discrete} (total: {sum(discrete)})')
+
+        opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
+        print('Opponent\'s allocation:', opp_allocation)
+
+        result = np.greater(discrete, opp_allocation)
+        print('Result:', result)
+        print('Payoff:', sum(result))
+
+        player.update(result)

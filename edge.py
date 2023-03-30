@@ -15,7 +15,7 @@ class Edge:
 
     def __init__(self, n: int, m: int, gamma: float):
         """
-        Edge algorithm
+        Edge algorithm initializer
         :param n: battlefields
         :param m: resources available to the algorithm (player)
         :param gamma: probability of exploration
