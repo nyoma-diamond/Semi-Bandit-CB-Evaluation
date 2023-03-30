@@ -4,10 +4,11 @@ import random
 import numpy as np
 import scipy.sparse as sci
 
+from cb_algorithm import CB_algorithm
 from pdgraph import allocation_by_id
 
 
-class Edge:
+class Edge(CB_algorithm):
     """
     Edge algorithm from Vu et al. (https://doi.org/10.1109/CDC40024.2019.9029186 and https://doi.org/10.48550/arXiv.1909.04912)
     This is a modified implementation of the code available at https://github.com/dongquan11/BanditColonelBlotto
@@ -20,6 +21,8 @@ class Edge:
         :param m: resources available to the algorithm (player)
         :param gamma: probability of exploration
         """
+        super().__init__()
+
         self.n = n
         self.m = m
 
@@ -212,7 +215,8 @@ class Edge:
 
         return allocation[allocation[:, 1].argsort()][:, 0]  # sorting just in case the ordering gets messed up
 
-    def update(self, loss):
+    def update(self, rewards):
+        loss = (self.n - sum(rewards)) / self.n
         # C = (1-self.gamma)*self.coocurence_mat()  + self.gamma * self.C_explore
         C = self.coocurence_mat()
         est_loss = np.asarray(loss * (np.matmul(np.linalg.pinv(C), self.bin_path(self.prev_path)))).flatten()
@@ -240,6 +244,5 @@ if __name__ == '__main__':
         result = np.greater(allocation, opp_allocation)
         print('Result:', result)
         print('Payoff:', sum(result))
-        print('Loss:', (battlefields - sum(result)) / battlefields)
 
-        player.update((battlefields - sum(result)) / battlefields)
+        player.update(result)

@@ -4,10 +4,11 @@ import numpy as np
 from math import exp, sqrt, log, comb
 from random import choice
 
+from cb_algorithm import CB_algorithm
 from pdgraph import allocation_by_id, make_discrete_allocation
 
 
-class MARA:
+class MARA(CB_algorithm):
     """
     Resource-allocation algorithm for the multi-armed problem from Dagan and Crammer. (https://proceedings.mlr.press/v83/dagan18a)
     """
@@ -19,6 +20,8 @@ class MARA:
         :param K: the number of jobs (battlefields)
         :param resources: discrete resources to use (None by default; use continuous allocation)
         """
+        super().__init__()
+
         if c <= 2:
             raise ValueError('c must be greater than 2')
         self.c = c

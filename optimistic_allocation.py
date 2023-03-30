@@ -4,10 +4,11 @@ from math import comb
 
 import numpy as np
 
+from cb_algorithm import CB_algorithm
 from pdgraph import make_discrete_allocation, allocation_by_id
 
 
-class Optimistic_Allocation:
+class Optimistic_Allocation(CB_algorithm):
     """
     Optimistic Allocation algorithm from Lattimore et al. (https://arxiv.org/pdf/1406.3840.pdf)
     """
@@ -20,6 +21,8 @@ class Optimistic_Allocation:
         :param v_lb: initial estimated lower bounds on v for each battlefield
         :param m: discrete resources to use (None by default; use continuous allocation)
         """
+        super().__init__()
+
         self.K = K
         self.resources = m
 

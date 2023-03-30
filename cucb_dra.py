@@ -3,6 +3,7 @@ import random
 
 import numpy as np
 
+from cb_algorithm import CB_algorithm
 from pdgraph import build_adjacency_matrix, coordinate_to_index, find_paths_allocations, allocation_by_id
 
 
@@ -51,12 +52,14 @@ class Oracle:
         return self.action_set[self.opt(D)[0]]
 
 
-class CUCB_DRA:
+class CUCB_DRA(CB_algorithm):
     """
     Online CUCB_DRA algorithm from Zuo and Joe-Wong (https://doi.org/10.1109/CISS50987.2021.9400228)
     """
 
     def __init__(self, Q: int, K: int):
+        super().__init__()
+
         self.Q = Q
         self.K = K
 
