@@ -331,7 +331,7 @@ def make_discrete_allocation(allocation: np.ndarray, N: int):
     rem = np.mod(allocation, 1)
 
     if N - sum(discrete) > 0:  # Allocate extra resources randomly with probability proportional to remainder
-        flips = np.random.choice(np.arange(rem.size),
+        flips = np.random.choice(range(rem.size),
                                  size=int(N - sum(discrete)),
                                  replace=False,
                                  p=rem/sum(rem))
