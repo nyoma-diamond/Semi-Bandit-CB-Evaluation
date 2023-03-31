@@ -4,11 +4,11 @@ import numpy as np
 from math import exp, sqrt, log, comb
 from random import choice
 
-from cb_algorithm import CB_algorithm
+from algorithms.cb_algorithm import CB_Algorithm
 from pdgraph import allocation_by_id, make_discrete_allocation
 
 
-class MARA(CB_algorithm):
+class MARA(CB_Algorithm):
     """
     Resource-allocation algorithm for the multi-armed problem from Dagan and Crammer. (https://proceedings.mlr.press/v83/dagan18a)
     """
@@ -69,8 +69,8 @@ class MARA(CB_algorithm):
 
         M_t /= sum(M_t)  # normalize in case not all resources have been allocated
 
-        self.r = np.append(self.r, np.expand_dims(r_t, axis=0), axis=0)
-        self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
+        self.r = np.vstack((self.r, r_t))
+        self.M = np.vstack((self.M, M_t))
         self.t += 1
 
         if self.m is not None:
@@ -83,7 +83,7 @@ class MARA(CB_algorithm):
         Update the algorithm parameters based on this round's payoff
         :param X_t: payoff for the current round by battlefield
         """
-        self.X = np.append(self.X, np.expand_dims(X_t, axis=0), axis=0)
+        self.X = np.vstack((self.X, X_t))
 
         # NOTE: paper uses i-1 for v_det. Since we haven't inserted v_det_t we don't need to worry about this offset
         s_det_t = np.sum(np.maximum(self.M - self.v_det, 0), axis=0, where=(self.v_det > 0))
@@ -98,9 +98,9 @@ class MARA(CB_algorithm):
         with np.errstate(divide='ignore', invalid='ignore'):
             v_prob_t = np.where(s_prob_t > 0, np.power(np.sqrt(zeta_t / (2 * s_prob_t)) + np.sqrt((zeta_t / (2 * s_prob_t)) + (x_prob_t / s_prob_t)), -2), 0)
 
-        self.s_det = np.append(self.s_det, np.expand_dims(s_det_t, axis=0), axis=0)
-        self.v_det = np.append(self.v_det, np.expand_dims(v_det_t, axis=0), axis=0)
-        self.v_prob = np.append(self.v_prob, np.expand_dims(v_prob_t, axis=0), axis=0)
+        self.s_det = np.vstack((self.s_det, s_det_t))
+        self.v_det = np.vstack((self.v_det, v_det_t))
+        self.v_prob = np.vstack((self.v_prob, v_prob_t))
 
 
 if __name__ == '__main__':

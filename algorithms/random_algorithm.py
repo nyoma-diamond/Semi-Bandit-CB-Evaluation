@@ -3,11 +3,11 @@ import random
 import numpy as np
 from math import comb
 
-from cb_algorithm import CB_algorithm
+from algorithms.cb_algorithm import CB_Algorithm
 from pdgraph import allocation_by_id
 
 
-class Random_Allocation(CB_algorithm):
+class Random_Allocation(CB_Algorithm):
     """
     Randomized colonel blotto allocation algorithm
     """
@@ -30,7 +30,7 @@ class Random_Allocation(CB_algorithm):
         Generate an allocation decision
         :return: the allocation decision
         """
-        return np.asarray(allocation_by_id(random.randint(0, self.num_decisions-1), self.K, self.n))
+        return allocation_by_id(random.randint(0, self.num_decisions-1), self.K, self.n)
 
     def update(self, _: np.ndarray):
         pass

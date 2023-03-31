@@ -3,8 +3,6 @@ from math import comb
 from tqdm import tqdm
 import multiprocessing as mp
 from functools import partial
-from time import sleep
-from scipy.special import softmax
 
 
 def coordinate_to_index(coordinate: tuple[int, int], battlefields: int, N: int) -> int:
@@ -75,7 +73,7 @@ def build_adjacency_matrix(battlefields: int,
     adj_mat = np.full(((battlefields - 1) * (N + 1) + 2, (battlefields - 1) * (N + 1) + 2), -1, dtype=int)
 
     if bounds is None:
-        bounds = np.full((battlefields, 2), (0, N), dtype=np.int)
+        bounds = np.full((battlefields, 2), (0, N), dtype=np.ubyte)
 
     for frm_i in range(adj_mat.shape[0] - 1):  # can skip last node because it's a dead end
         to_start, to_end = get_child_indices(frm_i, battlefields, N)
@@ -187,28 +185,11 @@ def find_paths_allocations(adj_mat: np.ndarray,
 
     if track_progress:
         pbar.close()
-        sleep(0.1)  # fudge to make sure printouts don't get messed up
 
     return paths
 
 
-# NOTE: this is actually slower than graph search!
-def build_allocations(battlefields: int, N: int) -> list[list[int]]:
-    """
-    Build the list of all possible allocations
-    :param battlefields: battlefields for allocation
-    :param N: resources available to allocate
-    :return: all possible allocations
-    """
-    if battlefields == 1:
-        return [[N]]
-
-    return [[n] + alloc
-            for n in range(N + 1)
-            for alloc in build_allocations(battlefields - 1, N - n)]
-
-
-def allocation_by_id(id: int, battlefields: int, N: int) -> list[int]:
+def allocation_by_id(id: int, battlefields: int, N: int) -> np.ndarray:
     """
     Computes the allocation decision associated with the provided lexicographical index
     :param id: id to compute decision from
@@ -217,7 +198,7 @@ def allocation_by_id(id: int, battlefields: int, N: int) -> list[int]:
     :return: the allocations as a list of ints
     """
     if battlefields == 1:
-        return [N]
+        return np.asarray([N], dtype=np.ubyte)
 
     i = 0
     unit = comb(battlefields + N - 2, battlefields - 2)
@@ -226,11 +207,11 @@ def allocation_by_id(id: int, battlefields: int, N: int) -> list[int]:
         i += 1
         unit = comb(battlefields + N - 2 - i, battlefields - 2)
 
-    return [i] + allocation_by_id(id, battlefields - 1, N - i)
+    return np.append(i, allocation_by_id(id, battlefields - 1, N - i))
 
 
-def compute_expected_payoff_for_decision(decision: list[int],
-                                         opp_decisions: list[list[int]],
+def compute_expected_payoff_for_decision(decision: np.ndarray,
+                                         opp_decisions: list[np.ndarray],
                                          win_draws=False) -> float:
     """
     Compute the expected payoff for a given decision
@@ -269,8 +250,6 @@ def expected_payoff(target_decisions: np.ndarray,
                 pbar.update(len(opp_decisions))
                 pbar.set_postfix_str(f'Expected payoff: {expected_payoff / (i + 1)}')
 
-    sleep(0.1)  # fudge to make sure printouts don't get messed up
-
     expected_payoff /= len(target_decisions)
 
     return expected_payoff
@@ -299,13 +278,12 @@ def best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws=False) -> i
     return payoff
 
 
-def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1, fudge_time=0):
+def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
     """
     Computes the expected value for the best possible payoff
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
-    :param fudge_time: time (in seconds) to sleep after completing computation to fudge print spacing. 0 by default
     :return: expected value for the best possible payoff
     """
     with mp.Pool() as pool:
@@ -317,18 +295,15 @@ def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chu
                                 miniters=len(opp_decisions) / 1e4,
                                 mininterval=0.2))
 
-        sleep(fudge_time)  # sleep for fudge_time to make sure printouts don't get messed up
-
     return total_payoff / len(opp_decisions)
 
 
-def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1, fudge_time=0):
+def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
     """
     Computes the supremum possible payoff (i.e., the minimum best possible value for payoff)
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
-    :param fudge_time: time (in seconds) to sleep after completing computation to fudge print spacing
     :return: supremum payoff
     """
     with mp.Pool() as pool:
@@ -339,8 +314,6 @@ def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksiz
                                 unit_scale=True,
                                 miniters=len(opp_decisions) / 1e4,
                                 mininterval=0.2))
-
-        sleep(fudge_time)  # sleep for fudge_time to make sure printouts don't get messed up
 
     return total_payoff
 
@@ -354,7 +327,7 @@ def make_discrete_allocation(allocation: np.ndarray, N: int):
     :return: discrete allocations
     """
     allocation *= N
-    discrete = np.floor(allocation).astype(int)
+    discrete = np.floor(allocation).astype(np.ubyte)
     rem = np.mod(allocation, 1)
 
     if N - sum(discrete) > 0:  # Allocate extra resources randomly with probability proportional to remainder

@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-from cb_algorithm import CB_algorithm
+from algorithms.cb_algorithm import CB_Algorithm
 from pdgraph import build_adjacency_matrix, coordinate_to_index, find_paths_allocations, allocation_by_id
 
 
@@ -12,7 +12,7 @@ class Oracle:
         adj_mat = build_adjacency_matrix(K, Q)
         d = coordinate_to_index((K, Q), K, Q)
 
-        print('Initializing CUCB_DRA oracle...')
+        print('Initializing CUCB_DRA oracle...', flush=True)
         self.action_set = find_paths_allocations(adj_mat, d, K, Q, track_progress=True)
 
         def expand(arr):
@@ -53,7 +53,7 @@ class Oracle:
         return self.action_set[self.opt(D)[0]]
 
 
-class CUCB_DRA(CB_algorithm):
+class CUCB_DRA(CB_Algorithm):
     """
     Online CUCB_DRA algorithm from Zuo and Joe-Wong (https://doi.org/10.1109/CISS50987.2021.9400228)
     """
@@ -88,7 +88,7 @@ class CUCB_DRA(CB_algorithm):
 
         self.t += 1
         self.T[np.arange(allocation.size), allocation] += 1
-        self.plays = np.append(self.plays, np.expand_dims(allocation, axis=0), axis=0)
+        self.plays = np.vstack((self.plays, allocation))
 
         return allocation
 
@@ -115,7 +115,7 @@ if __name__ == '__main__':
         allocation = player.generate_decision()
         print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
 
-        opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
+        opp_allocation = allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources)
         print('Opponent\'s allocation:', opp_allocation)
 
         result = np.greater(allocation, opp_allocation)

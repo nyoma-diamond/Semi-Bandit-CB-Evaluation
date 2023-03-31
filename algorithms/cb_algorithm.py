@@ -1,4 +1,4 @@
-class CB_algorithm:
+class CB_Algorithm:
     """
     Base Colonel Blotto algorithm class
     """

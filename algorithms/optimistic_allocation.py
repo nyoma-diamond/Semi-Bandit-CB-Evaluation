@@ -4,11 +4,11 @@ from math import comb
 
 import numpy as np
 
-from cb_algorithm import CB_algorithm
+from algorithms.cb_algorithm import CB_Algorithm
 from pdgraph import make_discrete_allocation, allocation_by_id
 
 
-class Optimistic_Allocation(CB_algorithm):
+class Optimistic_Allocation(CB_Algorithm):
     """
     Optimistic Allocation algorithm from Lattimore et al. (https://arxiv.org/pdf/1406.3840.pdf)
     """
@@ -57,7 +57,7 @@ class Optimistic_Allocation(CB_algorithm):
 
         M_t /= sum(M_t)  # normalize in case not all resources have been allocated
 
-        self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
+        self.M = np.vstack((self.M, M_t))
         self.t += 1
 
         if self.resources is not None:
@@ -71,10 +71,10 @@ class Optimistic_Allocation(CB_algorithm):
         Update the algorithm parameters based on this round's payoff
         :param X_t: payoff for the current round by battlefield
         """
-        self.X = np.append(self.X, np.expand_dims(X_t, axis=0), axis=0)
+        self.X = np.vstack((self.X, X_t))
 
         w_t = 1 / (1 - (self.M[-1] / self.v_ub[-1]))
-        self.w = np.append(self.w, np.expand_dims(w_t, axis=0), axis=0)
+        self.w = np.vstack((self.w, w_t))
 
         v_hat_inv_t = np.sum(self.w * self.X, axis=0) / np.sum(self.w * self.M, axis=0)
 
@@ -88,8 +88,8 @@ class Optimistic_Allocation(CB_algorithm):
             v_lb_inv_t = np.minimum(np.reciprocal(self.v_lb[-1]), v_hat_inv_t + epsilon_t)
             v_ub_inv_t = np.maximum(np.reciprocal(self.v_ub[-1]), v_hat_inv_t - epsilon_t)
 
-            self.v_lb = np.append(self.v_lb, np.expand_dims(np.reciprocal(v_lb_inv_t), axis=0), axis=0)
-            self.v_ub = np.append(self.v_ub, np.expand_dims(np.reciprocal(v_ub_inv_t), axis=0), axis=0)
+            self.v_lb = np.vstack((self.v_lb, np.reciprocal(v_lb_inv_t)))
+            self.v_ub = np.vstack((self.v_ub, np.reciprocal(v_ub_inv_t)))
 
     def f(self, R_t, V_sq_t):
         delta_0 = self.delta / (3 * np.square(R_t + 1) * np.square(V_sq_t + 1))

@@ -4,11 +4,11 @@ import random
 import numpy as np
 import scipy.sparse as sci
 
-from cb_algorithm import CB_algorithm
+from algorithms.cb_algorithm import CB_Algorithm
 from pdgraph import allocation_by_id
 
 
-class Edge(CB_algorithm):
+class Edge(CB_Algorithm):
     """
     Edge algorithm from Vu et al. (https://doi.org/10.1109/CDC40024.2019.9029186 and https://doi.org/10.48550/arXiv.1909.04912)
     This is a modified implementation of the code available at https://github.com/dongquan11/BanditColonelBlotto

@@ -61,8 +61,8 @@ if __name__ == '__main__':
 
     print('\n===== Example round =====')
 
-    A_play = np.asarray(allocation_by_id(random.randint(0, A_num_decisions-1), battlefields, N_A))
-    B_play = np.asarray(allocation_by_id(random.randint(0, B_num_decisions-1), battlefields, N_B))
+    A_play = allocation_by_id(random.randint(0, A_num_decisions-1), battlefields, N_A)
+    B_play = allocation_by_id(random.randint(0, B_num_decisions-1), battlefields, N_B)
 
     print('A allocation:', A_play)
     print('B allocation:', B_play)
@@ -93,11 +93,11 @@ if __name__ == '__main__':
     pruned_A = prune_dead_ends(build_adjacency_matrix(battlefields, N_A_est, A_bounds), prune_unreachable=track_dfs)
     pruned_B = prune_dead_ends(build_adjacency_matrix(battlefields, N_B_est, B_bounds), prune_unreachable=track_dfs)
 
-    print('\nFinding all possible decisions for player A...')
+    print('\nFinding all possible decisions for player A...', flush=True)
     A_possible_decisions = find_paths_allocations(pruned_A, d_A_est, battlefields, N_A_est, track_progress=track_dfs)
     print('Possible decisions B thinks A could have played:', len(A_possible_decisions))
 
-    print('\nFinding all possible decisions for player B...')
+    print('\nFinding all possible decisions for player B...', flush=True)
     B_possible_decisions = find_paths_allocations(pruned_B, d_B_est, battlefields, N_B_est, track_progress=track_dfs)
     print('Possible decisions A thinks B could have played:', len(B_possible_decisions))
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     print('\n===== Expected payoff/regret =====')
 
-    print('--- Player A ---')
+    print('--- Player A ---', flush=True)
 
     if estimate_expected_payoff:
         if A_sample_size is None:
@@ -146,7 +146,7 @@ if __name__ == '__main__':
         print('Estimated expected regret:', A_estimated_expected_regret)
 
 
-    print('\n--- Player B ---')
+    print('\n--- Player B ---', flush=True)
 
     if estimate_expected_payoff:
         if B_sample_size is None:
