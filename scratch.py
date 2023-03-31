@@ -3,7 +3,7 @@ from math import comb
 
 import numpy as np
 
-from pdgraph import coordinate_to_index, allocation_by_id
+from pdgraph import coordinate_to_index, allocation_by_id, compute_bounds
 from pdgraph import build_adjacency_matrix, find_paths_allocations, prune_dead_ends
 from pdgraph import expected_payoff, estimate_best_payoff, best_possible_payoff, supremum_payoff
 
@@ -82,22 +82,11 @@ if __name__ == '__main__':
 
     print('Computing bounds...')
 
-    A_bounds, B_bounds = [], []
+    B_bounds = compute_bounds(A_play, A_result, N_B, False)
+    A_bounds = compute_bounds(B_play, B_result, N_A, True)
 
-    for allocation, win in zip(A_play, A_result):
-        if win:
-            B_bounds.append((0, allocation - 1))
-        else:
-            B_bounds.append((allocation, N_B - (A_play.sum(where=B_result) - allocation))) # note that A losses are B wins
-
-    for allocation, win in zip(B_play, B_result):
-        if win:
-            A_bounds.append((0, allocation))
-        else:
-            A_bounds.append((allocation+1, N_A + 1 - A_result.sum() - (B_play.sum(where=A_result)-allocation))) # note that B losses are A wins
-
-    print('Bounds on B:', B_bounds)
-    print('Bounds on A:', A_bounds)
+    print('Bounds on B:', np.array2string(B_bounds.T, prefix='Bounds on B:'))
+    print('Bounds on A:', np.array2string(A_bounds.T, prefix='Bounds on A:'))
 
     print('Building possible decision (pruned) adjacency matrices...')
 

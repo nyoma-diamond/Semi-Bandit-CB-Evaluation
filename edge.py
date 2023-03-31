@@ -1,4 +1,3 @@
-import time
 from math import comb
 import random
 
@@ -203,14 +202,14 @@ class Edge(CB_algorithm):
     def generate_decision(self):
         self.H = self.update_H()
         if random.random() > self.gamma:  # Exploit (beta == 0 check)
-            print('exploiting')
+            # print('exploiting')
             path = self.exploit()
         else:  # Explore
-            print('exploring')
+            # print('exploring')
             path = self.explore()
 
         self.prev_path = path
-        allocation = np.apply_along_axis(player.allo, 1, np.argwhere(player.bin_path(path) == 1))
+        allocation = np.apply_along_axis(self.allo, 1, np.argwhere(self.bin_path(path) == 1))
 
         return allocation[allocation[:, 1].argsort()][:, 0]  # sorting just in case the ordering gets messed up
 

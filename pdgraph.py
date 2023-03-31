@@ -64,18 +64,18 @@ def get_child_indices(node: int, battlefields: int, N: int) -> tuple[int, int]:
 
 def build_adjacency_matrix(battlefields: int,
                            N: int,
-                           bounds: list[tuple[int, int]] = None) -> np.ndarray:
+                           bounds: np.ndarray = None) -> np.ndarray:
     """
     Creates adjacency matrix for possible allocations/decisions for a player
     :param battlefields: the number of battlefields in the game
     :param N: the number of resources available to the player
-    :param bounds: list of lower and upper bounds for possible allocations
+    :param bounds: lower and upper bounds for possible allocations
     :return: Adjacency matrix for graph representing possible allocations/decisions of style mat[from][to]
     """
     adj_mat = np.full(((battlefields - 1) * (N + 1) + 2, (battlefields - 1) * (N + 1) + 2), -1, dtype=int)
 
     if bounds is None:
-        bounds = [(0, N)] * battlefields
+        bounds = np.full((battlefields, 2), (0, N), dtype=np.int)
 
     for frm_i in range(adj_mat.shape[0] - 1):  # can skip last node because it's a dead end
         to_start, to_end = get_child_indices(frm_i, battlefields, N)
@@ -362,3 +362,23 @@ def make_discrete_allocation(allocation: np.ndarray, N: int):
     discrete[flips] += 1
 
     return discrete
+
+
+def compute_bounds(decision: np.ndarray, result: np.ndarray, opp_resources: int, win_draws: bool) -> np.ndarray:
+    """
+    Compute the bounds on the opponent's possible allocations
+    :param decision: player's allocations
+    :param result: vector of battlefields wins
+    :param opp_resources: resources believed available to the opponent
+    :param win_draws: whether the relevant player wins draws or not
+    :return: array containing the bounds of the opponent's possible allocations
+    """
+    lb = np.where(result,
+                  0,
+                  decision + win_draws)
+
+    ub = np.where(result,
+                  decision - (not win_draws),
+                  opp_resources + (1 - sum(~result)) * win_draws - (sum(decision[~result]) - decision))
+
+    return np.column_stack((lb, ub))
