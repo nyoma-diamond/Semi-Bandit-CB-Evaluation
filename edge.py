@@ -14,12 +14,12 @@ class Edge(CB_algorithm):
     This is a modified implementation of the code available at https://github.com/dongquan11/BanditColonelBlotto
     """
 
-    def __init__(self, n: int, m: int, gamma: float):
+    def __init__(self, n: int, m: int, gamma: float = 0.5):
         """
         Edge algorithm initializer
         :param n: battlefields
         :param m: resources available to the algorithm (player)
-        :param gamma: probability of exploration
+        :param gamma: probability of exploration (0.5 by default)
         """
         super().__init__()
 
@@ -59,8 +59,7 @@ class Edge(CB_algorithm):
 
         self.C_explore = self.coocurence_mat()
 
-        eigenval = np.sort(
-            np.round(np.linalg.eigvalsh(self.C_explore), 8))  # unclear why this is rounded; kept to prevent problems
+        eigenval = np.sort(np.round(np.linalg.eigvalsh(self.C_explore), 8))  # unclear why this is rounded; kept to prevent problems
         for i in range(self.E):
             if np.real(eigenval[i]) + 0 > 0:
                 lambda_min = np.real(eigenval[i])
@@ -70,8 +69,7 @@ class Edge(CB_algorithm):
         for u in range(self.N - 1):
             prob = []
             for k in self.Children_s[u]:
-                prob = np.append(prob,
-                                 [self.w[int(self.node_edge[u, k])] * self.H[k, self.N - 1] / self.H[u, self.N - 1]])
+                prob = np.append(prob, [self.w[int(self.node_edge[u, k])] * self.H[k, self.N - 1] / self.H[u, self.N - 1]])
             self.Prob_explore.append(list(prob))
 
         self.gamma = gamma
@@ -204,14 +202,14 @@ class Edge(CB_algorithm):
     def generate_decision(self):
         self.H = self.update_H()
         if random.random() > self.gamma:  # Exploit (beta == 0 check)
-            print('exploiting')
+            # print('exploiting')
             path = self.exploit()
         else:  # Explore
-            print('exploring')
+            # print('exploring')
             path = self.explore()
 
         self.prev_path = path
-        allocation = np.apply_along_axis(player.allo, 1, np.argwhere(player.bin_path(path) == 1))
+        allocation = np.apply_along_axis(self.allo, 1, np.argwhere(self.bin_path(path) == 1))
 
         return allocation[allocation[:, 1].argsort()][:, 0]  # sorting just in case the ordering gets messed up
 
