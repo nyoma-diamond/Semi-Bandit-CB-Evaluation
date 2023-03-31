@@ -299,12 +299,13 @@ def best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws=False) -> i
     return payoff
 
 
-def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
+def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1, fudge_time=0):
     """
     Computes the expected value for the best possible payoff
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
+    :param fudge_time: time (in seconds) to sleep after completing computation to fudge print spacing. 0 by default
     :return: expected value for the best possible payoff
     """
     with mp.Pool() as pool:
@@ -316,17 +317,18 @@ def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chu
                                 miniters=len(opp_decisions) / 1e4,
                                 mininterval=0.2))
 
-        sleep(0.1)  # fudge to make sure printouts don't get messed up
+        sleep(fudge_time)  # sleep for fudge_time to make sure printouts don't get messed up
 
     return total_payoff / len(opp_decisions)
 
 
-def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
+def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1, fudge_time=0):
     """
     Computes the supremum possible payoff (i.e., the minimum best possible value for payoff)
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
+    :param fudge_time: time (in seconds) to sleep after completing computation to fudge print spacing
     :return: supremum payoff
     """
     with mp.Pool() as pool:
@@ -338,7 +340,7 @@ def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksiz
                                 miniters=len(opp_decisions) / 1e4,
                                 mininterval=0.2))
 
-        sleep(0.1)  # fudge to make sure printouts don't get messed up
+        sleep(fudge_time)  # sleep for fudge_time to make sure printouts don't get messed up
 
     return total_payoff
 
@@ -352,14 +354,15 @@ def make_discrete_allocation(allocation: np.ndarray, N: int):
     :return: discrete allocations
     """
     allocation *= N
-    rem = np.mod(allocation, 1)
     discrete = np.floor(allocation).astype(int)
+    rem = np.mod(allocation, 1)
 
-    flips = np.random.choice(np.arange(rem.size),
-                             size=int(N - sum(discrete)),
-                             replace=False,
-                             p=softmax(rem))
-    discrete[flips] += 1
+    if N - sum(discrete) > 0:  # Allocate extra resources randomly with probability proportional to remainder
+        flips = np.random.choice(np.arange(rem.size),
+                                 size=int(N - sum(discrete)),
+                                 replace=False,
+                                 p=rem/sum(rem))
+        discrete[flips] += 1
 
     return discrete
 

@@ -162,8 +162,7 @@ class Edge(CB_algorithm):
         while len(chosen_path) <= self.n:
             prob = np.array([])
             for k in self.Children_s[node_k_1]:
-                prob = np.append(prob, [
-                    self.w[int(self.node_edge[node_k_1, k])] * self.H[k, self.N - 1] / self.H[node_k_1, self.N - 1]])
+                prob = np.append(prob, [self.w[int(self.node_edge[node_k_1, k])] * self.H[k, self.N - 1] / self.H[node_k_1, self.N - 1]])
             node_k = np.random.choice(self.Children_s[node_k_1], p=prob)
             chosen_path = np.append(chosen_path, node_k)
             node_k_1 = node_k
@@ -202,10 +201,8 @@ class Edge(CB_algorithm):
     def generate_decision(self):
         self.H = self.update_H()
         if random.random() > self.gamma:  # Exploit (beta == 0 check)
-            # print('exploiting')
             path = self.exploit()
         else:  # Explore
-            # print('exploring')
             path = self.explore()
 
         self.prev_path = path

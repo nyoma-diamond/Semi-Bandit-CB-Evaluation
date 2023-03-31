@@ -67,12 +67,13 @@ class MARA(CB_algorithm):
 
             resource -= M_t[k]
 
+        M_t /= sum(M_t)  # normalize in case not all resources have been allocated
+
         self.r = np.append(self.r, np.expand_dims(r_t, axis=0), axis=0)
         self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
         self.t += 1
 
         if self.m is not None:
-            M_t /= sum(M_t)  # normalize in case not all resources have been allocated
             M_t = make_discrete_allocation(M_t, self.m)
 
         return M_t
@@ -105,23 +106,23 @@ class MARA(CB_algorithm):
 if __name__ == '__main__':
     battlefields = 5
 
-    v = np.array([0.1, 0.05, 0.2, 0.15, 0.4], dtype=np.float_)
-
-    player = MARA(battlefields, c=2.5)
-
-    for i in range(20):
-        print()
-        allocation = player.generate_decision()
-        print(f'Player\'s allocation: {allocation} (total: {allocation.sum()})')
-
-        p = np.minimum(1, allocation / v)
-        print('Success probabilities:', p)
-        print('Expected payoff: ', p.sum())
-
-        X = np.random.binomial(1, p)
-        print(f'Payoffs: {X} (total: {sum(X)})')
-
-        player.update(X)
+    # v = np.array([0.1, 0.05, 0.2, 0.15, 0.4], dtype=np.float_)
+    #
+    # player = MARA(battlefields, c=2.5)
+    #
+    # for i in range(20):
+    #     print()
+    #     allocation = player.generate_decision()
+    #     print(f'Player\'s allocation: {allocation} (total: {allocation.sum()})')
+    #
+    #     p = np.minimum(1, allocation / v)
+    #     print('Success probabilities:', p)
+    #     print('Expected payoff: ', p.sum())
+    #
+    #     X = np.random.binomial(1, p)
+    #     print(f'Payoffs: {X} (total: {sum(X)})')
+    #
+    #     player.update(X)
 
     resources = 15
     opp_resources = 20
@@ -133,10 +134,10 @@ if __name__ == '__main__':
     for _ in range(20):
         print()
         allocation = player.generate_decision()
-        print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
+        print(f'Player\'s allocation: \t{allocation} (total: {sum(allocation)})')
 
         opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
-        print('Opponent\'s allocation:', opp_allocation)
+        print(f'Opponent\'s allocation:\t{opp_allocation}')
 
         result = np.greater(allocation, opp_allocation)
         print('Result:', result)

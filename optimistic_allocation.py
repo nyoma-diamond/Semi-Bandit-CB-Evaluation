@@ -48,17 +48,20 @@ class Optimistic_Allocation(CB_algorithm):
         M_t = np.zeros(shape=self.K)
 
         cur_v_lb = self.v_lb[-1]
+        print(cur_v_lb)
 
         for i in range(self.K):
             args = np.argwhere(M_t == 0)
             k = args[cur_v_lb[args].argmin()]
             M_t[k] = min(cur_v_lb[k], 1 - np.sum(M_t))
 
+        M_t /= sum(M_t)  # normalize in case not all resources have been allocated
+
         self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
         self.t += 1
 
         if self.resources is not None:
-            M_t /= sum(M_t)  # normalize in case not all resources have been allocated
+
             M_t = make_discrete_allocation(M_t, self.resources)
 
         return M_t

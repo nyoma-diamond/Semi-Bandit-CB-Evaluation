@@ -12,6 +12,7 @@ class Oracle:
         adj_mat = build_adjacency_matrix(K, Q)
         d = coordinate_to_index((K, Q), K, Q)
 
+        print('Initializing CUCB_DRA oracle...')
         self.action_set = find_paths_allocations(adj_mat, d, K, Q, track_progress=True)
 
         def expand(arr):
