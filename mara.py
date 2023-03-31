@@ -13,12 +13,12 @@ class MARA(CB_algorithm):
     Resource-allocation algorithm for the multi-armed problem from Dagan and Crammer. (https://proceedings.mlr.press/v83/dagan18a)
     """
 
-    def __init__(self, c: float, K: int, resources=None):
+    def __init__(self, K: int, m: int = None, c: float = 2.5):
         """
         Multi-Armed Resource-Allocation algorithm initializer
-        :param c: arbitrary coefficient >2 for computing allocation offset r
         :param K: the number of jobs (battlefields)
-        :param resources: discrete resources to use (None by default; use continuous allocation)
+        :param m: discrete resources to use (None by default; use continuous allocation)
+        :param c: arbitrary coefficient >2 for computing allocation offset r (2.5 by default)
         """
         super().__init__()
 
@@ -26,7 +26,7 @@ class MARA(CB_algorithm):
             raise ValueError('c must be greater than 2')
         self.c = c
         self.K = K
-        self.resources = resources
+        self.m = m
 
         self.v_prob = np.zeros(shape=(1, K))
         self.v_det = np.zeros(shape=(1, K))
@@ -71,9 +71,9 @@ class MARA(CB_algorithm):
         self.M = np.append(self.M, np.expand_dims(M_t, axis=0), axis=0)
         self.t += 1
 
-        if self.resources is not None:
+        if self.m is not None:
             M_t /= sum(M_t)  # normalize in case not all resources have been allocated
-            M_t = make_discrete_allocation(M_t, self.resources)
+            M_t = make_discrete_allocation(M_t, self.m)
 
         return M_t
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     v = np.array([0.1, 0.05, 0.2, 0.15, 0.4], dtype=np.float_)
 
-    player = MARA(2.5, battlefields)
+    player = MARA(battlefields, c=2.5)
 
     for i in range(20):
         print()
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     resources = 15
     opp_resources = 20
 
-    player = MARA(2.5, battlefields, resources)
+    player = MARA(battlefields, resources, 2.5)
 
     opp_num_decisions = comb(battlefields + opp_resources - 1, battlefields - 1)
 

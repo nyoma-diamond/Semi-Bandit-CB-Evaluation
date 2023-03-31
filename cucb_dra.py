@@ -57,11 +57,16 @@ class CUCB_DRA(CB_algorithm):
     Online CUCB_DRA algorithm from Zuo and Joe-Wong (https://doi.org/10.1109/CISS50987.2021.9400228)
     """
 
-    def __init__(self, Q: int, K: int):
+    def __init__(self, K: int, Q: int):
+        """
+        CUCB_DRA initializer
+        :param K: number of battlefields
+        :param Q: resources available to the model
+        """
         super().__init__()
 
-        self.Q = Q
         self.K = K
+        self.Q = Q
 
         self.oracle = Oracle(K, Q)
 
@@ -102,7 +107,7 @@ if __name__ == '__main__':
 
     opp_num_decisions = math.comb(battlefields + opp_resources - 1, battlefields - 1)
 
-    player = CUCB_DRA(resources, battlefields)
+    player = CUCB_DRA(battlefields, resources)
 
     for _ in range(20):
         print()

@@ -1,3 +1,4 @@
+import time
 from math import comb
 import random
 
@@ -14,12 +15,12 @@ class Edge(CB_algorithm):
     This is a modified implementation of the code available at https://github.com/dongquan11/BanditColonelBlotto
     """
 
-    def __init__(self, n: int, m: int, gamma: float):
+    def __init__(self, n: int, m: int, gamma: float = 0.5):
         """
         Edge algorithm initializer
         :param n: battlefields
         :param m: resources available to the algorithm (player)
-        :param gamma: probability of exploration
+        :param gamma: probability of exploration (0.5 by default)
         """
         super().__init__()
 
@@ -59,8 +60,7 @@ class Edge(CB_algorithm):
 
         self.C_explore = self.coocurence_mat()
 
-        eigenval = np.sort(
-            np.round(np.linalg.eigvalsh(self.C_explore), 8))  # unclear why this is rounded; kept to prevent problems
+        eigenval = np.sort(np.round(np.linalg.eigvalsh(self.C_explore), 8))  # unclear why this is rounded; kept to prevent problems
         for i in range(self.E):
             if np.real(eigenval[i]) + 0 > 0:
                 lambda_min = np.real(eigenval[i])
@@ -70,8 +70,7 @@ class Edge(CB_algorithm):
         for u in range(self.N - 1):
             prob = []
             for k in self.Children_s[u]:
-                prob = np.append(prob,
-                                 [self.w[int(self.node_edge[u, k])] * self.H[k, self.N - 1] / self.H[u, self.N - 1]])
+                prob = np.append(prob, [self.w[int(self.node_edge[u, k])] * self.H[k, self.N - 1] / self.H[u, self.N - 1]])
             self.Prob_explore.append(list(prob))
 
         self.gamma = gamma
