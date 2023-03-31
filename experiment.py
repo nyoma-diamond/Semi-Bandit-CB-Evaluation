@@ -18,9 +18,9 @@ if __name__ == '__main__':
     resources = [10, 15, 20]
     T = 10
 
-    # estimate_expected_payoff = False
-    # A_sample_size = None
-    # B_sample_size = None
+    estimate_expected_payoff = False
+    A_sample_size = None
+    B_sample_size = None
 
     track_dfs = False
     chunksize = 32
@@ -85,4 +85,48 @@ if __name__ == '__main__':
                         B_possible_decisions = find_paths_allocations(pruned_B, d_B, K, B_resources, track_progress=track_dfs)
                         A_possible_decisions = find_paths_allocations(pruned_A, d_A, K, A_resources, track_progress=track_dfs)
 
+                        if estimate_expected_payoff:
+                            if A_sample_size is None:
+                                A_decisions = find_paths_allocations(A_graph, d_A, K, A_resources, track_progress=track_dfs)
+                            else:
+                                A_decisions = [allocation_by_id(id, K, A_resources) for id in random.choices(range(A_num_decisions), k=A_sample_size)]
 
+                            A_expected_payoff = expected_payoff(A_decisions, np.expand_dims(B_decision, axis=0), win_draws=False, chunksize=chunksize)
+
+                            A_expected_regret = A_expected_payoff - A_result.sum()
+                            A_estimated_expected_payoff = expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=chunksize)
+
+                            A_estimated_expected_regret = A_estimated_expected_payoff - A_result.sum()
+
+                        A_best_payoff = best_possible_payoff(B_decision, A_resources, win_draws=False)
+                        A_best_regret = A_best_payoff - A_result.sum()
+
+                        A_estimated_best_payoff = estimate_best_payoff(B_possible_decisions, A_resources, win_draws=False, chunksize=chunksize)
+                        A_estimated_best_regret = A_estimated_best_payoff - A_result.sum()
+
+                        A_supremum_payoff = supremum_payoff(B_possible_decisions, A_resources, win_draws=False, chunksize=chunksize)
+                        A_supremum_regret = A_supremum_payoff - A_result.sum()
+
+
+
+                        if estimate_expected_payoff:
+                            if B_sample_size is None:
+                                B_decisions = find_paths_allocations(B_graph, d_B, K, B_resources, track_progress=track_dfs)
+                            else:
+                                B_decisions = [allocation_by_id(id, K, B_resources) for id in random.choices(range(B_num_decisions), k=B_sample_size)]
+
+                            B_expected_payoff = expected_payoff(B_decisions, np.expand_dims(A_decision, axis=0), win_draws=True, chunksize=chunksize)
+
+                            B_expected_regret = B_expected_payoff - B_result.sum()
+                            B_estimated_expected_payoff = expected_payoff(B_decisions, A_possible_decisions, win_draws=True, chunksize=chunksize)
+
+                            B_estimated_expected_regret = B_estimated_expected_payoff - B_result.sum()
+
+                        B_best_payoff = best_possible_payoff(A_decision, B_resources, win_draws=True)
+                        B_best_regret = B_best_payoff - B_result.sum()
+
+                        B_estimated_best_payoff = estimate_best_payoff(A_possible_decisions, B_resources, win_draws=True, chunksize=chunksize)
+                        B_estimated_best_regret = B_estimated_best_payoff - B_result.sum()
+
+                        B_supremum_payoff = supremum_payoff(A_possible_decisions, B_resources, win_draws=True, chunksize=chunksize)
+                        B_supremum_regret = B_supremum_payoff - B_result.sum()
