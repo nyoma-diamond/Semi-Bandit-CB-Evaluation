@@ -36,7 +36,7 @@ class Oracle:
         if p.ndim == 1:
             p = np.expand_dims(p, axis=0)
 
-        return np.sum(np.sum(p, axis=1), axis=1)
+        return p.sum(axis=(1, 2))
 
     def opt(self, D: np.ndarray):
         """
