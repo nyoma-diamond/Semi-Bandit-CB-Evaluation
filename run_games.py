@@ -1,5 +1,7 @@
 import random
+from functools import partial
 from itertools import combinations_with_replacement, product
+import multiprocessing as mp
 
 from tqdm import tqdm
 import numpy as np
@@ -13,67 +15,88 @@ from algorithms.mara import MARA
 from algorithms.random_algorithm import Random_Allocation
 
 
-battlefields = [5]
-resources = [10, 15, 20]
-T = 100
+def play_game(A_alg, A_kwargs, B_alg, B_kwargs, A_resources, B_resources, K, T):
+    A_decisions, A_results = np.empty(shape=(0, K), dtype=np.bool_), np.empty(shape=(0, K), dtype=np.bool_)
+    B_decisions, B_results = np.empty(shape=(0, K), dtype=np.bool_), np.empty(shape=(0, K), dtype=np.bool_)
 
-algorithms = {
-    MARA: dict(c=2.5),
-    CUCB_DRA: dict(),
-    Edge: dict(gamma=0.25),
-    Random_Allocation: dict()
-}
+    print('\nPlayer A:', A_alg.__name__)
+    print('Player B:', B_alg.__name__)
 
-games = {}
+    player_A = A_alg(K, A_resources, **A_kwargs)
+    player_B = B_alg(K, B_resources, **B_kwargs)
 
-for K in battlefields:
-    games[K] = {}
-    for A_resources, B_resources in combinations_with_replacement(sorted(resources, reverse=True), 2):
-        games[K][(A_resources, B_resources)] = {}
+    # print(f'Playing game with {T} rounds...', flush=True)
 
-        print('\n====================')
-        print(f'Battlefields: {K}\nA resources: {A_resources}\nB resources: {B_resources}')
-        print('====================')
+    for _ in range(T):
+        A_decision = player_A.generate_decision()
+        B_decision = player_B.generate_decision()
 
-        for (A_alg, A_kwargs), (B_alg, B_kwargs) in product(algorithms.items(), repeat=2):
-            games[K][(A_resources, B_resources)][(A_alg.__name__, B_alg.__name__)] = {}
+        A_decisions = np.vstack((A_decisions, A_decision))
+        B_decisions = np.vstack((B_decisions, B_decision))
 
-            A_decisions, A_results = np.empty(shape=(0, K), dtype=np.bool_), np.empty(shape=(0, K), dtype=np.bool_)
-            B_decisions, B_results = np.empty(shape=(0, K), dtype=np.bool_), np.empty(shape=(0, K), dtype=np.bool_)
+        A_result = np.greater(A_decision, B_decision)
+        B_result = ~A_result
 
-            print('\nPlayer A:', A_alg.__name__)
-            print('Player B:', B_alg.__name__)
+        A_results = np.vstack((A_results, A_result))
+        B_results = np.vstack((B_results, B_result))
 
-            player_A = A_alg(K, A_resources, **A_kwargs)
-            player_B = B_alg(K, B_resources, **B_kwargs)
+        player_A.update(A_result)
+        player_B.update(B_result)
 
-            print(f'Playing game with {T} rounds...', flush=True)
+    return (A_decisions, A_results), (B_decisions, B_results)
 
-            for _ in tqdm(range(T)):
-                A_decision = player_A.generate_decision()
-                B_decision = player_B.generate_decision()
+def game_worker(args, A_resources, B_resources, K, T):
+    (A_alg, A_kwargs), (B_alg, B_kwargs) = args
+    (A_decisions, A_results), (B_decisions, B_results) = play_game(A_alg, A_kwargs, B_alg, B_kwargs, A_resources, B_resources, K, T)
 
-                A_decisions = np.vstack((A_decisions, A_decision))
-                B_decisions = np.vstack((B_decisions, B_decision))
+    return (A_alg.__name__, B_alg.__name__), {
+        'A': {
+            'Decisions': A_decisions,
+            'Results': A_results
+        },
+        'B': {
+            'Decisions': B_decisions,
+            'Results': B_results
+        }
+    }
 
-                A_result = np.greater(A_decision, B_decision)
-                B_result = ~A_result
 
-                A_results = np.vstack((A_results, A_result))
-                B_results = np.vstack((B_results, B_result))
 
-                player_A.update(A_result)
-                player_B.update(B_result)
+if __name__ == '__main__':
+    battlefields = [5]
+    resources = [10, 15, 20]
+    T = 100
 
-            games[K][(A_resources, B_resources)][(A_alg.__name__, B_alg.__name__)] = {
-                'A': {
-                    'Decisions': A_decisions,
-                    'Results': A_results
-                },
-                'B': {
-                    'Decisions': B_decisions,
-                    'Results': B_results
-                }
-            }
+    chunksize = 32
 
-np.save('games.npy', games, allow_pickle=True)
+    algorithms = {
+        MARA: dict(c=2.5),
+        CUCB_DRA: dict(),
+        Edge: dict(gamma=0.25),
+        Random_Allocation: dict()
+    }
+
+    games = {}
+
+    for K in battlefields:
+        games[K] = {}
+        for A_resources, B_resources in combinations_with_replacement(sorted(resources, reverse=True), 2):
+            games[K][(A_resources, B_resources)] = {}
+
+            print('\n====================')
+            print(f'Battlefields: {K}\nA resources: {A_resources}\nB resources: {B_resources}')
+            print('====================')
+
+            print(len(list(product(algorithms.items(), repeat=2))))
+
+            with mp.Pool(16) as pool:
+                for algs, game in tqdm(pool.imap_unordered(partial(game_worker,
+                                                                   A_resources=A_resources,
+                                                                   B_resources=B_resources,
+                                                                   K=K,
+                                                                   T=T),
+                                                           product(algorithms.items(), repeat=2),
+                                                           chunksize=chunksize)):
+                    games[K][(A_resources, B_resources)][algs] = game
+
+    np.save('games.npy', games, allow_pickle=True)

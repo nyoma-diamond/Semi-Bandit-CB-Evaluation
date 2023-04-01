@@ -3,6 +3,9 @@ from math import comb
 
 import numpy as np
 
+np.random.seed(42)
+random.seed(42)
+
 from pdgraph import coordinate_to_index, allocation_by_id, compute_bounds
 from pdgraph import build_adjacency_matrix, find_paths_allocations, prune_dead_ends
 from pdgraph import expected_payoff, estimate_best_payoff, best_possible_payoff, supremum_payoff

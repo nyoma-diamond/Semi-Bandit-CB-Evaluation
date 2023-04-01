@@ -8,12 +8,12 @@ from pdgraph import build_adjacency_matrix, coordinate_to_index, find_paths_allo
 
 
 class Oracle:
-    def __init__(self, K: int, Q: int):
+    def __init__(self, K: int, Q: int, show_progress=False):
         adj_mat = build_adjacency_matrix(K, Q)
         d = coordinate_to_index((K, Q), K, Q)
 
-        print('Initializing CUCB_DRA oracle...', flush=True)
-        self.action_set = find_paths_allocations(adj_mat, d, K, Q, track_progress=True)
+        # print('Initializing CUCB_DRA oracle...', flush=True)
+        self.action_set = find_paths_allocations(adj_mat, d, K, Q, track_progress=show_progress)
 
         def expand(arr):
             new = np.zeros((K, Q + 1))
