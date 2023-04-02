@@ -1,9 +1,12 @@
 .idea
 .ipynb_checkpoints
 
+__pycache__
+
 *.pickle
 *.pkl
 *.npy
 *.npz
 
 simulations
+logs

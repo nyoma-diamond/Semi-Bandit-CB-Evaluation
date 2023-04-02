@@ -86,7 +86,7 @@ def game_worker(args: tuple, T: int):
 
 
 if __name__ == '__main__':
-    battlefields = [5]
+    battlefields = [5, 10]
     resources = [10, 15, 20]
     T = 100
 
