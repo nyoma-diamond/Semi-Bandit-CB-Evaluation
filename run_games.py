@@ -1,3 +1,4 @@
+import traceback
 from pathlib import Path
 import random
 import time
@@ -76,8 +77,15 @@ def game_worker(args: tuple, T: int) -> GameData:
     player_A = A_alg(K, A_resources, **A_kwargs)
     player_B = B_alg(K, B_resources, **B_kwargs)
 
+    A_game = B_game = (np.empty(0), np.empty(0))
+
     # Play the game
-    A_game, B_game = play_game(player_A, player_B, K, T)
+    try:
+        A_game, B_game = play_game(player_A, player_B, K, T)
+    except Exception as exc:
+        print('Something went wrong!')
+        print(f'Parameters: {", ".join([T, K, A_alg.__name__, A_resources, B_alg.__name__, B_resources])}')
+        print(exc)
 
     return GameData(K, T, A_alg.__name__, A_resources, *A_game, B_alg.__name__, B_resources, *B_game)
 
