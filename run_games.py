@@ -84,7 +84,7 @@ def game_worker(args: tuple, T: int) -> GameData:
         A_game, B_game = play_game(player_A, player_B, K, T)
     except Exception as exc:
         print('Something went wrong!')
-        print(f'Parameters: {", ".join([T, K, A_alg.__name__, A_resources, B_alg.__name__, B_resources])}')
+        print(f'Parameters: {", ".join(str(x) for x in [T, K, A_alg.__name__, A_resources, B_alg.__name__, B_resources])}')
         print(exc)
 
     return GameData(K, T, A_alg.__name__, A_resources, *A_game, B_alg.__name__, B_resources, *B_game)
