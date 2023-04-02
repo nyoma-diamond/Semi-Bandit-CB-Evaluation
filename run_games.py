@@ -1,3 +1,4 @@
+from pathlib import Path
 import random
 import time
 from functools import partial
@@ -91,5 +92,6 @@ if __name__ == '__main__':
 
             games[K][AB_resources][matchup] = game
 
+    Path('./simulations').mkdir(parents=True, exist_ok=True)
 
-    np.save(rf'games-{time.strftime("%Y-%m-%d_%H-%M-%S")}.npy', games, allow_pickle=True)
+    np.save(rf'./simulations/games-{time.strftime("%Y-%m-%d_%H-%M-%S")}.npy', games, allow_pickle=True)

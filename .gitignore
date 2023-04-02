@@ -5,3 +5,5 @@
 *.pkl
 *.npy
 *.npz
+
+simulations
