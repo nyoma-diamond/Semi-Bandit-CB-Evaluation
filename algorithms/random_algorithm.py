@@ -1,7 +1,7 @@
 import random
+from math import comb
 
 import numpy as np
-from math import comb
 
 from algorithms.cb_algorithm import CB_Algorithm
 from pdgraph import allocation_by_id

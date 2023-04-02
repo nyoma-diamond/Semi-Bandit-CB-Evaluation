@@ -1,8 +1,9 @@
 import numpy as np
 from math import comb
-from tqdm import tqdm
-import multiprocessing as mp
 from functools import partial
+import multiprocessing as mp
+
+from tqdm import tqdm
 
 
 def coordinate_to_index(coordinate: tuple[int, int], battlefields: int, N: int) -> int:

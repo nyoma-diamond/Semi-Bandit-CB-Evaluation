@@ -1,8 +1,8 @@
 import random
-
-import numpy as np
 from math import exp, sqrt, log, comb
 from random import choice
+
+import numpy as np
 
 from algorithms.cb_algorithm import CB_Algorithm
 from pdgraph import allocation_by_id, make_discrete_allocation
