@@ -349,9 +349,7 @@ def compute_bounds(decision: np.ndarray, result: np.ndarray, opp_resources: int,
     :param win_draws: whether the relevant player wins draws or not
     :return: array containing the bounds of the opponent's possible allocations
     """
-    lb = np.where(result,
-                  0,
-                  decision + win_draws)
+    lb = np.where(result, 0, decision + win_draws)
 
     ub = np.where(result,
                   decision - (not win_draws),
