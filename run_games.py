@@ -77,8 +77,6 @@ def game_worker(args: tuple, T: int) -> GameData:
     player_A = A_alg(K, A_resources, **A_kwargs)
     player_B = B_alg(K, B_resources, **B_kwargs)
 
-    A_game = B_game = (np.empty(0), np.empty(0))
-
     # Play the game
     try:
         A_game, B_game = play_game(player_A, player_B, K, T)
@@ -86,6 +84,8 @@ def game_worker(args: tuple, T: int) -> GameData:
         print('Something went wrong!')
         print(f'Parameters: {", ".join(str(x) for x in [T, K, A_alg.__name__, A_resources, B_alg.__name__, B_resources])}')
         print(exc)
+
+        A_game = B_game = (np.empty(0), np.empty(0))
 
     return GameData(K, T, A_alg.__name__, A_resources, *A_game, B_alg.__name__, B_resources, *B_game)
 
