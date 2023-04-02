@@ -8,12 +8,12 @@ from pdgraph import build_adjacency_matrix, coordinate_to_index, find_paths_allo
 
 
 class Oracle:
-    def __init__(self, K: int, Q: int, show_progress=False):
+    def __init__(self, K: int, Q: int, track_init_progress=False):
         adj_mat = build_adjacency_matrix(K, Q)
         d = coordinate_to_index((K, Q), K, Q)
 
         # print('Initializing CUCB_DRA oracle...', flush=True)
-        self.action_set = find_paths_allocations(adj_mat, d, K, Q, track_progress=show_progress)
+        self.action_set = find_paths_allocations(adj_mat, d, K, Q, track_progress=track_init_progress)
 
         def expand(arr):
             new = np.zeros((K, Q + 1))
@@ -58,18 +58,19 @@ class CUCB_DRA(CB_Algorithm):
     Online CUCB_DRA algorithm from Zuo and Joe-Wong (https://doi.org/10.1109/CISS50987.2021.9400228)
     """
 
-    def __init__(self, K: int, Q: int):
+    def __init__(self, K: int, Q: int, track_init_progress=False):
         """
         CUCB_DRA initializer
         :param K: number of battlefields
         :param Q: resources available to the model
+        :param track_init_progress: show a progress bar for oracle initialization
         """
         super().__init__()
 
         self.K = K
         self.Q = Q
 
-        self.oracle = Oracle(K, Q)
+        self.oracle = Oracle(K, Q, track_init_progress=track_init_progress)
 
         self.T = np.zeros(shape=(K, Q + 1), dtype=np.float_)  # number of times each arm has been played
         self.mu_hat = np.zeros(shape=(K, Q + 1), dtype=np.float_)  # empirical mean of reward function

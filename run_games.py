@@ -1,4 +1,5 @@
 import random
+import time
 from functools import partial
 from itertools import combinations_with_replacement, product
 import multiprocessing as mp
@@ -15,17 +16,9 @@ from algorithms.mara import MARA
 from algorithms.random_algorithm import Random_Allocation
 
 
-def play_game(A_alg, A_kwargs, B_alg, B_kwargs, A_resources, B_resources, K, T):
+def play_game(player_A, player_B, K, T):
     A_decisions, A_results = np.empty(shape=(0, K), dtype=np.bool_), np.empty(shape=(0, K), dtype=np.bool_)
     B_decisions, B_results = np.empty(shape=(0, K), dtype=np.bool_), np.empty(shape=(0, K), dtype=np.bool_)
-
-    print('\nPlayer A:', A_alg.__name__)
-    print('Player B:', B_alg.__name__)
-
-    player_A = A_alg(K, A_resources, **A_kwargs)
-    player_B = B_alg(K, B_resources, **B_kwargs)
-
-    # print(f'Playing game with {T} rounds...', flush=True)
 
     for _ in range(T):
         A_decision = player_A.generate_decision()
@@ -45,11 +38,19 @@ def play_game(A_alg, A_kwargs, B_alg, B_kwargs, A_resources, B_resources, K, T):
 
     return (A_decisions, A_results), (B_decisions, B_results)
 
-def game_worker(args, A_resources, B_resources, K, T):
-    (A_alg, A_kwargs), (B_alg, B_kwargs) = args
-    (A_decisions, A_results), (B_decisions, B_results) = play_game(A_alg, A_kwargs, B_alg, B_kwargs, A_resources, B_resources, K, T)
 
-    return (A_alg.__name__, B_alg.__name__), {
+def game_worker(args, T):
+    ((A_alg, A_kwargs), (B_alg, B_kwargs)), (A_resources, B_resources), K = args
+
+    # print('\nPlayer A:', A_alg.__name__)
+    # print('Player B:', B_alg.__name__)
+
+    player_A = A_alg(K, A_resources, **A_kwargs)
+    player_B = B_alg(K, B_resources, **B_kwargs)
+
+    (A_decisions, A_results), (B_decisions, B_results) = play_game(player_A, player_B, K, T)
+
+    return (K, (A_resources, B_resources), (A_alg.__name__, B_alg.__name__)), {
         'A': {
             'Decisions': A_decisions,
             'Results': A_results
@@ -61,13 +62,10 @@ def game_worker(args, A_resources, B_resources, K, T):
     }
 
 
-
 if __name__ == '__main__':
     battlefields = [5]
     resources = [10, 15, 20]
     T = 100
-
-    chunksize = 32
 
     algorithms = {
         MARA: dict(c=2.5),
@@ -78,25 +76,20 @@ if __name__ == '__main__':
 
     games = {}
 
-    for K in battlefields:
-        games[K] = {}
-        for A_resources, B_resources in combinations_with_replacement(sorted(resources, reverse=True), 2):
-            games[K][(A_resources, B_resources)] = {}
+    params = list(product(product(algorithms.items(), repeat=2),
+                     combinations_with_replacement(sorted(resources, reverse=True), 2),
+                     battlefields))
 
-            print('\n====================')
-            print(f'Battlefields: {K}\nA resources: {A_resources}\nB resources: {B_resources}')
-            print('====================')
+    with mp.Pool() as pool:
+        for (K, AB_resources, matchup), game in tqdm(pool.imap_unordered(partial(game_worker, T=T),
+                                                                                          params),
+                                                                      total=len(params)):
+            if K not in games.keys():
+                games[K] = {}
+            if AB_resources not in games[K].keys():
+                games[K][AB_resources] = {}
 
-            print(len(list(product(algorithms.items(), repeat=2))))
+            games[K][AB_resources][matchup] = game
 
-            with mp.Pool(16) as pool:
-                for algs, game in tqdm(pool.imap_unordered(partial(game_worker,
-                                                                   A_resources=A_resources,
-                                                                   B_resources=B_resources,
-                                                                   K=K,
-                                                                   T=T),
-                                                           product(algorithms.items(), repeat=2),
-                                                           chunksize=chunksize)):
-                    games[K][(A_resources, B_resources)][algs] = game
 
-    np.save('games.npy', games, allow_pickle=True)
+    np.save(rf'games-{time.strftime("%Y-%m-%d_%H-%M-%S")}.npy', games, allow_pickle=True)
