@@ -102,7 +102,7 @@ if __name__ == '__main__':
     }
 
     out_dir = rf'./simulations/{time.strftime("%Y-%m-%d_%H-%M-%S")}'
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    Path(out_dir).mkdir(parents=True, exist_ok=False)
 
     params = list(product(product(algorithms.items(), repeat=2),
                      combinations_with_replacement(sorted(resources, reverse=True), 2),
