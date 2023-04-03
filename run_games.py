@@ -3,6 +3,7 @@ import random
 import time
 from functools import partial
 from itertools import combinations_with_replacement, product
+import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 
 from tqdm import tqdm
@@ -108,8 +109,9 @@ if __name__ == '__main__':
                      combinations_with_replacement(sorted(resources, reverse=True), 2),
                      battlefields))
 
-    with ProcessPoolExecutor() as executor:
-        for game in tqdm(executor.map(partial(game_worker, T=T), params), total=len(params)):
+    with mp.Pool() as pool:
+        for game in tqdm(pool.imap_unordered(partial(game_worker, T=T), params),
+                         total=len(params)):
             filename = '-'.join(str(x) for x in [game.T, game.K, game.A_algorithm, game.A_resources, game.B_algorithm, game.B_resources])
             with open(rf'{out_dir}/{filename}', 'wb') as file:
                 dill.dump(game, file)
