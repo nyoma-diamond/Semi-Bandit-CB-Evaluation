@@ -3,7 +3,7 @@ import random
 import time
 from functools import partial
 from itertools import combinations_with_replacement, product
-import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor
 
 from tqdm import tqdm
 import numpy as np
@@ -72,12 +72,12 @@ def game_worker(args: tuple, T: int) -> GameData:
     """
     ((A_alg, A_kwargs), (B_alg, B_kwargs)), (A_resources, B_resources), K = args  # extract arguments
 
-    # Initialize the players
-    player_A = A_alg(K, A_resources, **A_kwargs)
-    player_B = B_alg(K, B_resources, **B_kwargs)
-
-    # Play the game
     try:
+        # Initialize the players
+        player_A = A_alg(K, A_resources, **A_kwargs)
+        player_B = B_alg(K, B_resources, **B_kwargs)
+
+        # Play the game
         A_game, B_game = play_game(player_A, player_B, K, T)
     except Exception as exc:
         print('Something went wrong!')
@@ -108,9 +108,8 @@ if __name__ == '__main__':
                      combinations_with_replacement(sorted(resources, reverse=True), 2),
                      battlefields))
 
-    with mp.Pool() as pool:
-        for game in tqdm(pool.imap_unordered(partial(game_worker, T=T), params),
-                                                     total=len(params)):
+    with ProcessPoolExecutor() as executor:
+        for game in tqdm(executor.map(partial(game_worker, T=T), params), total=len(params)):
             filename = '-'.join(str(x) for x in [game.T, game.K, game.A_algorithm, game.A_resources, game.B_algorithm, game.B_resources])
             with open(rf'{out_dir}/{filename}', 'wb') as file:
                 dill.dump(game, file)
