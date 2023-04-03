@@ -208,7 +208,7 @@ def allocation_by_id(id: int, battlefields: int, N: int) -> np.ndarray:
         i += 1
         unit = comb(battlefields + N - 2 - i, battlefields - 2)
 
-    return np.append(i, allocation_by_id(id, battlefields - 1, N - i))
+    return np.append(i, allocation_by_id(id, battlefields - 1, N - i)).astype(np.ubyte)
 
 
 def compute_expected_payoff_for_decision(decision: np.ndarray,

@@ -35,7 +35,7 @@ class Optimistic_Allocation(CB_Algorithm):
         self.v_ub = np.full_like(self.v_lb, np.inf)
 
         self.M = np.empty(shape=(0, K))
-        self.X = np.empty(shape=(0, K))
+        self.X = np.empty(shape=(0, K), dtype=np.bool_)
         self.w = np.empty(shape=(0, K))
 
         self.t = 0

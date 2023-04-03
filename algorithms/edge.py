@@ -208,7 +208,7 @@ class Edge(CB_Algorithm):
         self.prev_path = path
         allocation = np.apply_along_axis(self.allo, 1, np.argwhere(self.bin_path(path) == 1))
 
-        return allocation[allocation[:, 1].argsort()][:, 0]  # sorting just in case the ordering gets messed up
+        return allocation[allocation[:, 1].argsort()][:, 0].astype(np.ubyte)  # sorting just in case the ordering gets messed up
 
     def update(self, rewards):
         loss = (self.n - sum(rewards)) / self.n

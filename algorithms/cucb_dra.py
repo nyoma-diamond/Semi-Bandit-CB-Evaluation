@@ -75,7 +75,7 @@ class CUCB_DRA(CB_Algorithm):
         self.T = np.zeros(shape=(K, Q + 1), dtype=np.float_)  # number of times each arm has been played
         self.mu_hat = np.zeros(shape=(K, Q + 1), dtype=np.float_)  # empirical mean of reward function
 
-        self.plays = np.empty(shape=(0, K), dtype=np.int_)
+        self.plays = np.empty(shape=(0, K), dtype=np.ubyte)
 
         self.t = 1
 
@@ -85,7 +85,7 @@ class CUCB_DRA(CB_Algorithm):
 
         mu_bar = self.mu_hat + rho
 
-        allocation = self.oracle.generate_decision(mu_bar)
+        allocation = self.oracle.generate_decision(mu_bar).astype(np.ubyte)
 
         self.t += 1
         self.T[np.arange(allocation.size), allocation] += 1

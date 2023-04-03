@@ -1,4 +1,3 @@
-import traceback
 from pathlib import Path
 import random
 import time
@@ -36,8 +35,8 @@ def play_game(player_A: CB_Algorithm,
     :return: The players' decisions and their associated per-battlefield results (wins/losses) during the game
     """
     # Initialize empty decision and result arrays
-    A_decisions, A_results = np.empty(shape=(0, K), dtype=np.bool_), np.empty(shape=(0, K), dtype=np.bool_)
-    B_decisions, B_results = np.empty(shape=(0, K), dtype=np.bool_), np.empty(shape=(0, K), dtype=np.bool_)
+    A_decisions, A_results = np.empty(shape=(0, K), dtype=np.ubyte), np.empty(shape=(0, K), dtype=np.bool_)
+    B_decisions, B_results = np.empty(shape=(0, K), dtype=np.ubyte), np.empty(shape=(0, K), dtype=np.bool_)
 
     # Play the game for T rounds
     for _ in range(T):

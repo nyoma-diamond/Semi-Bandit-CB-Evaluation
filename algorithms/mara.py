@@ -34,7 +34,7 @@ class MARA(CB_Algorithm):
         self.s_det = np.empty(shape=(0, K))
         self.r = np.empty(shape=(0, K))
         self.M = np.empty(shape=(0, K))
-        self.X = np.empty(shape=(0, K))
+        self.X = np.empty(shape=(0, K), dtype=np.bool_)
 
         self.t = 1
 
