@@ -163,13 +163,11 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
 
 
 def find_paths_allocations(adj_mat: np.ndarray,
-                           dest: int,
                            battlefields: int,
                            N: int,
                            track_progress=False) -> np.ndarray:
     """
     Find all possible paths (decisions) through the provided DAG
-    :param dest: the destination node
     :param adj_mat: adjacency matrix representing the DAG being searched
     :param battlefields: the number of battlefields
     :param N: the number of resources available to the player
@@ -182,7 +180,7 @@ def find_paths_allocations(adj_mat: np.ndarray,
         nodes = (adj_mat != -1).any(axis=1).sum()
         pbar = tqdm(total=nodes)
 
-    paths, _ = find_subpaths_allocations(adj_mat, 0, dest, {}, battlefields, N, pbar)
+    paths, _ = find_subpaths_allocations(adj_mat, 0, len(adj_mat)-1, {}, battlefields, N, pbar)
 
     if track_progress:
         pbar.close()
@@ -213,7 +211,7 @@ def allocation_by_id(id: int, battlefields: int, N: int) -> np.ndarray:
 
 def compute_expected_payoff_for_decision(decision: np.ndarray,
                                          opp_decisions: list[np.ndarray],
-                                         win_draws=False) -> float:
+                                         win_draws: bool) -> float:
     """
     Compute the expected payoff for a given decision
     :param decision: decision to compute the expected payoff of
@@ -228,7 +226,7 @@ def compute_expected_payoff_for_decision(decision: np.ndarray,
 
 def expected_payoff(target_decisions: np.ndarray,
                     opp_decisions: np.ndarray,
-                    win_draws=False,
+                    win_draws: bool,
                     chunksize=1) -> float:
     """
     Compute the expected payoff for a set of decisions
@@ -256,7 +254,7 @@ def expected_payoff(target_decisions: np.ndarray,
     return expected_payoff
 
 
-def best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws=False) -> int:
+def best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws: bool) -> int:
     """
     Computes the best possible payoff against the provided decision
     :param opp_decision: decision by opponent
@@ -279,7 +277,7 @@ def best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws=False) -> i
     return payoff
 
 
-def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
+def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chunksize=1):
     """
     Computes the expected value for the best possible payoff
     :param opp_decisions: set of decisions possible to be played by the opponent
@@ -299,7 +297,7 @@ def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chu
     return total_payoff / len(opp_decisions)
 
 
-def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws=False, chunksize=1):
+def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chunksize=1):
     """
     Computes the supremum possible payoff (i.e., the minimum best possible value for payoff)
     :param opp_decisions: set of decisions possible to be played by the opponent

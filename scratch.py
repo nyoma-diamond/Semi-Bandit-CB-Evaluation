@@ -6,7 +6,7 @@ import numpy as np
 np.random.seed(42)
 random.seed(42)
 
-from pdgraph import coordinate_to_index, allocation_by_id, compute_bounds
+from pdgraph import allocation_by_id, compute_bounds
 from pdgraph import build_adjacency_matrix, find_paths_allocations, prune_dead_ends
 from pdgraph import expected_payoff, estimate_best_payoff, best_possible_payoff, supremum_payoff
 
@@ -34,14 +34,6 @@ if __name__ == '__main__':
 
     print(f'A reference decision set: {"True" if A_sample_size is None else "Sampled"} decision set{"" if A_sample_size is None else f" of size {A_sample_size}"}')
     print(f'B reference decision set: {"True" if B_sample_size is None else "Sampled"} decision set{"" if B_sample_size is None else f" of size {B_sample_size}"}')
-
-    d_A = coordinate_to_index((battlefields, N_A), battlefields, N_A)
-    d_B = coordinate_to_index((battlefields, N_B), battlefields, N_B)
-
-    d_A_est = coordinate_to_index((battlefields, N_A_est), battlefields, N_A_est)
-    d_B_est = coordinate_to_index((battlefields, N_B_est), battlefields, N_B_est)
-
-
 
 
     print('\n===== Graph information =====')
@@ -97,11 +89,11 @@ if __name__ == '__main__':
     pruned_B = prune_dead_ends(build_adjacency_matrix(battlefields, N_B_est, B_bounds), prune_unreachable=track_dfs)
 
     print('\nFinding all possible decisions for player A...', flush=True)
-    A_possible_decisions = find_paths_allocations(pruned_A, d_A_est, battlefields, N_A_est, track_progress=track_dfs)
+    A_possible_decisions = find_paths_allocations(pruned_A, battlefields, N_A_est, track_progress=track_dfs)
     print('Possible decisions B thinks A could have played:', len(A_possible_decisions))
 
     print('\nFinding all possible decisions for player B...', flush=True)
-    B_possible_decisions = find_paths_allocations(pruned_B, d_B_est, battlefields, N_B_est, track_progress=track_dfs)
+    B_possible_decisions = find_paths_allocations(pruned_B, battlefields, N_B_est, track_progress=track_dfs)
     print('Possible decisions A thinks B could have played:', len(B_possible_decisions))
 
 
@@ -112,7 +104,7 @@ if __name__ == '__main__':
 
     if estimate_expected_payoff:
         if A_sample_size is None:
-            A_decisions = find_paths_allocations(adj_mat_A, d_A, battlefields, N_A, track_progress=track_dfs)
+            A_decisions = find_paths_allocations(adj_mat_A, battlefields, N_A, track_progress=track_dfs)
         else:
             A_decisions = [allocation_by_id(id, battlefields, N_A) for id in random.choices(range(A_num_decisions), k=A_sample_size)]
 
@@ -153,7 +145,7 @@ if __name__ == '__main__':
 
     if estimate_expected_payoff:
         if B_sample_size is None:
-            B_decisions = find_paths_allocations(adj_mat_B, d_B, battlefields, N_B, track_progress=track_dfs)
+            B_decisions = find_paths_allocations(adj_mat_B, battlefields, N_B, track_progress=track_dfs)
         else:
             B_decisions = [allocation_by_id(id, battlefields, N_B) for id in random.choices(range(B_num_decisions), k=B_sample_size)]
 

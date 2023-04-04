@@ -13,7 +13,7 @@ class Oracle:
         d = coordinate_to_index((K, Q), K, Q)
 
         # print('Initializing CUCB_DRA oracle...', flush=True)
-        self.action_set = find_paths_allocations(adj_mat, d, K, Q, track_progress=track_init_progress)
+        self.action_set = find_paths_allocations(adj_mat, K, Q, track_progress=track_init_progress)
 
         def expand(arr):
             new = np.zeros((K, Q + 1))
