@@ -90,7 +90,7 @@ def compute_metrics(t: int,
 
 
 if __name__ == '__main__':
-    chunksize = 32
+    chunksize = 64
     sample_threshold = None
 
     out_dir = rf'./results/{time.strftime("%Y-%m-%d_%H-%M-%S")}'
