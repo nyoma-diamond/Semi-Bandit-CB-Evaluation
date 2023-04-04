@@ -103,6 +103,8 @@ if __name__ == '__main__':
     out_dir = rf'./simulations/{time.strftime("%Y-%m-%d_%H-%M-%S")}'
     Path(out_dir).mkdir(parents=True, exist_ok=False)
 
+    print(f'Saving results to {out_dir}')
+
     params = list(product(product(algorithms.items(), repeat=2),
                      combinations_with_replacement(sorted(resources, reverse=True), 2),
                      battlefields))
@@ -110,6 +112,6 @@ if __name__ == '__main__':
     with mp.Pool() as pool:
         for game in tqdm(pool.imap_unordered(partial(game_worker, T=T), params),
                          total=len(params)):
-            filename = '-'.join(str(x) for x in [game.T, game.K, game.A_algorithm, game.A_resources, game.B_algorithm, game.B_resources])
+            filename = game.identifier()
             with open(rf'{out_dir}/{filename}', 'wb') as file:
                 dill.dump(game, file)

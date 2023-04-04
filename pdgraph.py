@@ -1,4 +1,3 @@
-import time
 from math import comb
 from functools import partial
 import multiprocessing as mp

@@ -16,3 +16,10 @@ class GameData:
     B_resources: int
     B_decisions: np.ndarray
     B_results: np.ndarray
+
+    def identifier(self):
+        """
+        Creates a filename-safe identifier
+        :return: filename-safe identifier
+        """
+        return '-'.join(str(x) for x in [self.T, self.K, self.A_algorithm, self.A_resources, self.B_algorithm, self.B_resources])

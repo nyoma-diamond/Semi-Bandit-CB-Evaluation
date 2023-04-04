@@ -1,6 +1,7 @@
 import glob
 import random
-# from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import time
+from pathlib import Path
 
 from tqdm import tqdm
 import dill
@@ -16,18 +17,18 @@ from pdgraph import build_adjacency_matrix, find_paths_allocations, prune_dead_e
 from pdgraph import compute_expected_payoff, estimate_best_payoff, compute_best_possible_payoff, compute_supremum_payoff
 
 
-def compute_metrics(game: GameData,
+def compute_metrics(t: int,
+                    game: GameData,
                     win_draws: bool,
-                    t: int,
                     all_decisions: np.ndarray,
                     sample_threshold=None,
                     chunksize=1,
                     track_progress=False):
     """
     Compute metrics for a player given the game and round
+    :param t: the round
     :param game: game data
     :param win_draws: whether the player wins draws (False = player A, True = player B)
-    :param t: the round
     :param all_decisions: the list of all possible decisions available to the player
                     NOTE: large quantities of possible decisions can cause computation to take a very long time.
                           If this happens, consider providing a uniformly sampled subset of decisions instead.
@@ -88,10 +89,14 @@ def compute_metrics(game: GameData,
     return payoffs, regrets
 
 
-
 if __name__ == '__main__':
-    chunksize = 100
+    chunksize = 32
     sample_threshold = None
+
+    out_dir = rf'./results/{time.strftime("%Y-%m-%d_%H-%M-%S")}'
+    Path(out_dir).mkdir(parents=True, exist_ok=False)
+
+    print(f'Saving results to {out_dir}')
 
     games = {}
 
@@ -116,12 +121,22 @@ if __name__ == '__main__':
             B_all_decisions = find_paths_allocations(B_graph, K, B_resources)
 
             for game in tqdm(games[K][(A_resources, B_resources)], leave=False):
+                if len(game.A_decisions) != game.T or len(game.A_decisions) != len(game.B_decisions):
+                    continue
+
+                A_payoffs, A_regrets = np.empty((0, 5)), np.empty((0, 5))
+                B_payoffs, B_regrets = np.empty((0, 5)), np.empty((0, 5))
+
                 for t in tqdm(range(game.T), leave=False):
-                    # ========== PLAYER A METRICS ==========
-                    A_payoffs, A_regrets = compute_metrics(game, False, t, A_all_decisions,
-                                                           sample_threshold=sample_threshold, chunksize=chunksize)
+                    A_round_payoff, A_round_regret = compute_metrics(t, game, False, A_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize)
+                    A_payoffs = np.vstack((A_payoffs, A_round_payoff))
+                    A_regrets = np.vstack((A_regrets, A_round_regret))
 
-                    # ========== PLAYER B METRICS ==========
-                    B_payoffs, B_regrets = compute_metrics(game, True, t, B_all_decisions,
-                                                           sample_threshold=sample_threshold, chunksize=chunksize)
+                    B_round_payoff, B_round_regret = compute_metrics(t, game, True, B_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize)
+                    B_payoffs = np.vstack((B_payoffs, B_round_payoff))
+                    B_regrets = np.vstack((B_regrets, B_round_regret))
 
+
+                results = np.stack(((A_payoffs, A_regrets), (B_payoffs, B_regrets)))
+                with open(rf'{out_dir}/{game.identifier()}.npy', 'wb') as f:
+                    np.save(f, results)
