@@ -74,8 +74,6 @@ def compute_metrics(game, win_draws, t, all_decisions, chunksize=1, track_progre
 
 
 if __name__ == '__main__':
-    estimate_expected_payoff = False
-
     track_progress = False
     chunksize = 32
 
@@ -102,9 +100,6 @@ if __name__ == '__main__':
 
             A_all_decisions = find_paths_allocations(A_graph, K, A_resources, track_progress=track_progress)
             B_all_decisions = find_paths_allocations(B_graph, K, B_resources, track_progress=track_progress)
-
-            d_A = coordinate_to_index((K, A_resources), K, A_resources)
-            d_B = coordinate_to_index((K, B_resources), K, B_resources)
 
             for game in games[K][(A_resources, B_resources)]:
                 for t in range(game.T):
