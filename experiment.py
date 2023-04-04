@@ -100,6 +100,7 @@ if __name__ == '__main__':
 
     games = {}
 
+    # Load game data (**/* LOADS ALL FILES, INCLUDING IN SUBDIRECTORIES)
     for path in glob.glob(r'./simulations/**/*'):
         with open(path, 'rb') as  f:
             game = dill.load(f)
@@ -111,32 +112,51 @@ if __name__ == '__main__':
             else:
                 games[game.K][(game.A_resources, game.B_resources)].append(game)
 
+    # for each tested number of battlefields
     for K in games.keys():
+        # for each resource matchup
         for (A_resources, B_resources) in tqdm(games[K].keys(), leave=True):
 
+            # build decision graphs for players
             A_graph = build_adjacency_matrix(K, A_resources)
             B_graph = build_adjacency_matrix(K, B_resources)
 
+            # generate all possible decisions
             A_all_decisions = find_paths_allocations(A_graph, K, A_resources)
             B_all_decisions = find_paths_allocations(B_graph, K, B_resources)
 
+            # for each game (algorithm matchup)
             for game in tqdm(games[K][(A_resources, B_resources)], leave=False):
+                # something went wrong in the match and there's no data; skip
                 if len(game.A_decisions) != game.T or len(game.A_decisions) != len(game.B_decisions):
                     continue
 
+                # initialize payoff and regret records
                 A_payoffs, A_regrets = np.empty((0, 5)), np.empty((0, 5))
                 B_payoffs, B_regrets = np.empty((0, 5)), np.empty((0, 5))
 
+                # for each round
                 for t in tqdm(range(game.T), leave=False):
+                    # compute payoff & regret metrics for player A
                     A_round_payoff, A_round_regret = compute_metrics(t, game, False, A_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize)
                     A_payoffs = np.vstack((A_payoffs, A_round_payoff))
                     A_regrets = np.vstack((A_regrets, A_round_regret))
 
+                    # compute payoff & regret metrics for player B
                     B_round_payoff, B_round_regret = compute_metrics(t, game, True, B_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize)
                     B_payoffs = np.vstack((B_payoffs, B_round_payoff))
                     B_regrets = np.vstack((B_regrets, B_round_regret))
 
-
+                # prepare data for saving to file
                 results = np.stack(((A_payoffs, A_regrets), (B_payoffs, B_regrets)))
-                with open(rf'{out_dir}/{game.identifier()}.npy', 'wb') as f:
-                    np.save(f, results)
+
+                filename = rf'{out_dir}/{game.identifier()}'
+                # if a file with the desired name already exists, increment i until available
+                if Path(rf'{filename}.npy').exists():
+                    i = 1
+                    while Path(rf'{filename}_{i}.npy').exists():
+                        i += 1
+                    filename = rf'{filename}_{i}'
+
+                # save the data
+                np.save(filename, results)
