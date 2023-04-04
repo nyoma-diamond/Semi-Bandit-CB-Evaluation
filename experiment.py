@@ -31,6 +31,7 @@ def compute_metrics(game: GameData,
     :param all_decisions: the list of all possible decisions available to the player
                     NOTE: large quantities of possible decisions can cause computation to take a very long time.
                           If this happens, consider providing a uniformly sampled subset of decisions instead.
+    :param sample_threshold: maximum number of operations before sampling is used to reduce the number of operations
     :param chunksize: chunksize parameter for multiprocessing
     :param track_progress: whether to use tqdm to track computation progress
     :return: the payoffs and regrets observed by the player this round
