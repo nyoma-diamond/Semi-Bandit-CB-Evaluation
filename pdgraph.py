@@ -234,7 +234,7 @@ def compute_expected_payoff(target_decisions: np.ndarray,
     :param target_decisions: set of decisions to compute the expected payoff of
     :param opp_decisions: all possible decisions the opponent can take
     :param win_draws: whether the player wins draws
-    :param chunksize: chunksize parameter passed to pool.imap_unordered
+    :param chunksize: chunksize parameter for multiprocessing
     :param track_progress: whether to use tqdm to track computation progress
     :return: expected payoff of the provided set of decisions
     """
@@ -288,6 +288,7 @@ def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chu
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
+    :param chunksize: chunksize parameter for multiprocessing
     :param track_progress: whether to use tqdm to track computation progress
     :return: expected value for the best possible payoff
     """
@@ -314,6 +315,7 @@ def compute_supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, 
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
+    :param chunksize: chunksize parameter for multiprocessing
     :param track_progress: whether to use tqdm to track computation progress
     :return: supremum payoff
     """
