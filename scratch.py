@@ -8,11 +8,11 @@ random.seed(42)
 
 from pdgraph import allocation_by_id, compute_bounds
 from pdgraph import build_adjacency_matrix, find_paths_allocations, prune_dead_ends
-from pdgraph import expected_payoff, estimate_best_payoff, best_possible_payoff, supremum_payoff
+from pdgraph import compute_expected_payoff, estimate_best_payoff, compute_best_possible_payoff, compute_supremum_payoff
 
 
 if __name__ == '__main__':
-    battlefields = 15
+    battlefields = 10
     N_A = 30
     N_B = 20
     N_A_est = N_A
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     A_sample_size = None
     B_sample_size = None
 
-    track_dfs = True
+    track_progress = True
     chunksize = 32
 
 
@@ -85,15 +85,15 @@ if __name__ == '__main__':
 
     print('Building possible decision (pruned) adjacency matrices...')
 
-    pruned_A = prune_dead_ends(build_adjacency_matrix(battlefields, N_A_est, A_bounds), prune_unreachable=track_dfs)
-    pruned_B = prune_dead_ends(build_adjacency_matrix(battlefields, N_B_est, B_bounds), prune_unreachable=track_dfs)
+    pruned_A = prune_dead_ends(build_adjacency_matrix(battlefields, N_A_est, A_bounds), prune_unreachable=track_progress)
+    pruned_B = prune_dead_ends(build_adjacency_matrix(battlefields, N_B_est, B_bounds), prune_unreachable=track_progress)
 
     print('\nFinding all possible decisions for player A...', flush=True)
-    A_possible_decisions = find_paths_allocations(pruned_A, battlefields, N_A_est, track_progress=track_dfs)
+    A_possible_decisions = find_paths_allocations(pruned_A, battlefields, N_A_est, track_progress=track_progress)
     print('Possible decisions B thinks A could have played:', len(A_possible_decisions))
 
     print('\nFinding all possible decisions for player B...', flush=True)
-    B_possible_decisions = find_paths_allocations(pruned_B, battlefields, N_B_est, track_progress=track_dfs)
+    B_possible_decisions = find_paths_allocations(pruned_B, battlefields, N_B_est, track_progress=track_progress)
     print('Possible decisions A thinks B could have played:', len(B_possible_decisions))
 
 
@@ -104,24 +104,24 @@ if __name__ == '__main__':
 
     if estimate_expected_payoff:
         if A_sample_size is None:
-            A_decisions = find_paths_allocations(adj_mat_A, battlefields, N_A, track_progress=track_dfs)
+            A_decisions = find_paths_allocations(adj_mat_A, battlefields, N_A, track_progress=track_progress)
         else:
             A_decisions = [allocation_by_id(id, battlefields, N_A) for id in random.choices(range(A_num_decisions), k=A_sample_size)]
 
-        A_expected_payoff = expected_payoff(A_decisions, np.expand_dims(B_play, axis=0), win_draws=False, chunksize=chunksize)
+        A_expected_payoff = compute_expected_payoff(A_decisions, np.expand_dims(B_play, axis=0), False, chunksize=chunksize, track_progress=track_progress)
 
         A_expected_regret = A_expected_payoff - A_result.sum()
-        A_estimated_expected_payoff = expected_payoff(A_decisions, B_possible_decisions, win_draws=False, chunksize=chunksize)
+        A_estimated_expected_payoff = compute_expected_payoff(A_decisions, B_possible_decisions, False, chunksize=chunksize, track_progress=track_progress)
 
         A_estimated_expected_regret = A_estimated_expected_payoff - A_result.sum()
 
-    A_best_payoff = best_possible_payoff(B_play, N_A, win_draws=False)
+    A_best_payoff = compute_best_possible_payoff(B_play, N_A, False)
     A_best_regret = A_best_payoff - A_result.sum()
 
-    A_estimated_best_payoff = estimate_best_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=chunksize)
+    A_estimated_best_payoff = estimate_best_payoff(B_possible_decisions, N_A, False, chunksize=chunksize, track_progress=track_progress)
     A_estimated_best_regret = A_estimated_best_payoff - A_result.sum()
 
-    A_supremum_payoff = supremum_payoff(B_possible_decisions, N_A, win_draws=False, chunksize=chunksize)
+    A_supremum_payoff = compute_supremum_payoff(B_possible_decisions, N_A, False, chunksize=chunksize, track_progress=track_progress)
     A_supremum_regret = A_supremum_payoff - A_result.sum()
 
     print('Round payoff:', A_result.sum())
@@ -145,24 +145,24 @@ if __name__ == '__main__':
 
     if estimate_expected_payoff:
         if B_sample_size is None:
-            B_decisions = find_paths_allocations(adj_mat_B, battlefields, N_B, track_progress=track_dfs)
+            B_decisions = find_paths_allocations(adj_mat_B, battlefields, N_B, track_progress=track_progress)
         else:
             B_decisions = [allocation_by_id(id, battlefields, N_B) for id in random.choices(range(B_num_decisions), k=B_sample_size)]
 
-        B_expected_payoff = expected_payoff(B_decisions, np.expand_dims(A_play, axis=0), win_draws=True, chunksize=chunksize)
+        B_expected_payoff = compute_expected_payoff(B_decisions, np.expand_dims(A_play, axis=0), True, chunksize=chunksize, track_progress=track_progress)
 
         B_expected_regret = B_expected_payoff - B_result.sum()
-        B_estimated_expected_payoff = expected_payoff(B_decisions, A_possible_decisions, win_draws=True, chunksize=chunksize)
+        B_estimated_expected_payoff = compute_expected_payoff(B_decisions, A_possible_decisions, True, chunksize=chunksize, track_progress=track_progress)
 
         B_estimated_expected_regret = B_estimated_expected_payoff - B_result.sum()
 
-    B_best_payoff = best_possible_payoff(A_play, N_B, win_draws=True)
+    B_best_payoff = compute_best_possible_payoff(A_play, N_B, True)
     B_best_regret = B_best_payoff - B_result.sum()
 
-    B_estimated_best_payoff = estimate_best_payoff(A_possible_decisions, N_B, win_draws=True, chunksize=chunksize)
+    B_estimated_best_payoff = estimate_best_payoff(A_possible_decisions, N_B, True, chunksize=chunksize, track_progress=track_progress)
     B_estimated_best_regret = B_estimated_best_payoff - B_result.sum()
 
-    B_supremum_payoff = supremum_payoff(A_possible_decisions, N_B, win_draws=True, chunksize=chunksize)
+    B_supremum_payoff = compute_supremum_payoff(A_possible_decisions, N_B, True, chunksize=chunksize, track_progress=track_progress)
     B_supremum_regret = B_supremum_payoff - B_result.sum()
 
     print('Round payoff:', B_result.sum())

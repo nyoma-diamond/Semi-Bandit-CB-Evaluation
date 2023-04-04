@@ -224,28 +224,33 @@ def compute_expected_payoff_for_decision(decision: np.ndarray,
     return total / len(opp_decisions)
 
 
-def expected_payoff(target_decisions: np.ndarray,
-                    opp_decisions: np.ndarray,
-                    win_draws: bool,
-                    chunksize=1) -> float:
+def compute_expected_payoff(target_decisions: np.ndarray,
+                            opp_decisions: np.ndarray,
+                            win_draws: bool,
+                            chunksize=1,
+                            track_progress=False) -> float:
     """
     Compute the expected payoff for a set of decisions
     :param target_decisions: set of decisions to compute the expected payoff of
     :param opp_decisions: all possible decisions the opponent can take
     :param win_draws: whether the player wins draws
     :param chunksize: chunksize parameter passed to pool.imap_unordered
+    :param track_progress: whether to use tqdm to track computation progress
     :return: expected payoff of the provided set of decisions
     """
     expected_payoff = 0
 
-    with tqdm(total=len(target_decisions) * len(opp_decisions), unit_scale=True) as pbar:
-        with mp.Pool() as pool:
-            for i, partial_payoff in enumerate(pool.imap_unordered(partial(compute_expected_payoff_for_decision,
-                                                                           opp_decisions=opp_decisions,
-                                                                           win_draws=win_draws),
-                                                                   target_decisions,
-                                                                   chunksize=chunksize)):
-                expected_payoff += partial_payoff
+    if track_progress:
+        pbar = tqdm(total=len(target_decisions) * len(opp_decisions), unit_scale=True)
+
+    with mp.Pool() as pool:
+        for i, partial_payoff in enumerate(pool.imap_unordered(partial(compute_expected_payoff_for_decision,
+                                                                       opp_decisions=opp_decisions,
+                                                                       win_draws=win_draws),
+                                                               target_decisions,
+                                                               chunksize=chunksize)):
+            expected_payoff += partial_payoff
+            if track_progress:
                 pbar.update(len(opp_decisions))
                 pbar.set_postfix_str(f'Expected payoff: {expected_payoff / (i + 1)}')
 
@@ -254,7 +259,7 @@ def expected_payoff(target_decisions: np.ndarray,
     return expected_payoff
 
 
-def best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws: bool) -> int:
+def compute_best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws: bool) -> int:
     """
     Computes the best possible payoff against the provided decision
     :param opp_decision: decision by opponent
@@ -277,44 +282,57 @@ def best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws: bool) -> i
     return payoff
 
 
-def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chunksize=1):
+def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chunksize=1, track_progress=False):
     """
     Computes the expected value for the best possible payoff
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
+    :param track_progress: whether to use tqdm to track computation progress
     :return: expected value for the best possible payoff
     """
     with mp.Pool() as pool:
-        total_payoff = sum(tqdm(pool.imap_unordered(partial(best_possible_payoff, N=N, win_draws=win_draws),
-                                                    opp_decisions,
-                                                    chunksize=chunksize),
+        best_payoffs = pool.imap_unordered(partial(compute_best_possible_payoff, N=N, win_draws=win_draws),
+                                           opp_decisions,
+                                           chunksize=chunksize)
+        if track_progress:
+            best_payoffs = tqdm(best_payoffs,
                                 total=len(opp_decisions),
                                 unit_scale=True,
                                 miniters=len(opp_decisions) / 1e4,
-                                mininterval=0.2))
+                                mininterval=0.2)
+
+
+        total_payoff = sum(best_payoffs)
 
     return total_payoff / len(opp_decisions)
 
 
-def supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chunksize=1):
+def compute_supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chunksize=1, track_progress=False):
     """
     Computes the supremum possible payoff (i.e., the minimum best possible value for payoff)
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
+    :param track_progress: whether to use tqdm to track computation progress
     :return: supremum payoff
     """
+
     with mp.Pool() as pool:
-        total_payoff = min(tqdm(pool.imap_unordered(partial(best_possible_payoff, N=N, win_draws=win_draws),
-                                                    opp_decisions,
-                                                    chunksize=chunksize),
+        best_payoffs = pool.imap_unordered(partial(compute_best_possible_payoff, N=N, win_draws=win_draws),
+                                           opp_decisions,
+                                           chunksize=chunksize)
+        if track_progress:
+            best_payoffs = tqdm(best_payoffs,
                                 total=len(opp_decisions),
                                 unit_scale=True,
                                 miniters=len(opp_decisions) / 1e4,
-                                mininterval=0.2))
+                                mininterval=0.2)
 
-    return total_payoff
+
+        supremum_payoff = min(best_payoffs)
+
+    return supremum_payoff
 
 
 def make_discrete_allocation(allocation: np.ndarray, N: int):
