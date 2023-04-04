@@ -23,3 +23,10 @@ class GameData:
         :return: filename-safe identifier
         """
         return '-'.join(str(x) for x in [self.T, self.K, self.A_algorithm, self.A_resources, self.B_algorithm, self.B_resources])
+
+    def is_valid(self):
+        """
+        returns whether the game is valid or not
+        :return: game validity
+        """
+        return len(self.A_decisions) == len(self.B_decisions) == self.T

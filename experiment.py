@@ -100,9 +100,9 @@ if __name__ == '__main__':
 
     games = {}
 
-    # Load game data (**/* LOADS ALL FILES, INCLUDING IN SUBDIRECTORIES)
+    # Load game data (**/* LOADS ALL FILES IN ALL SUBDIRECTORIES OF ./simulations)
     for path in glob.glob(r'./simulations/**/*'):
-        with open(path, 'rb') as  f:
+        with open(path, 'rb') as f:
             game = dill.load(f)
 
             if game.K not in games.keys():
@@ -128,7 +128,7 @@ if __name__ == '__main__':
             # for each game (algorithm matchup)
             for game in tqdm(games[K][(A_resources, B_resources)], leave=False):
                 # something went wrong in the match and there's no data; skip
-                if len(game.A_decisions) != game.T or len(game.A_decisions) != len(game.B_decisions):
+                if not game.is_valid():
                     continue
 
                 # initialize payoff and regret records
