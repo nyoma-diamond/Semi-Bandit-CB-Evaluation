@@ -90,7 +90,6 @@ def compute_metrics(game: GameData,
 
 
 if __name__ == '__main__':
-    track_progress = False
     chunksize = 100
     sample_threshold = None
 
@@ -113,14 +112,16 @@ if __name__ == '__main__':
             A_graph = build_adjacency_matrix(K, A_resources)
             B_graph = build_adjacency_matrix(K, B_resources)
 
-            A_all_decisions = find_paths_allocations(A_graph, K, A_resources, track_progress=track_progress)
-            B_all_decisions = find_paths_allocations(B_graph, K, B_resources, track_progress=track_progress)
+            A_all_decisions = find_paths_allocations(A_graph, K, A_resources)
+            B_all_decisions = find_paths_allocations(B_graph, K, B_resources)
 
             for game in tqdm(games[K][(A_resources, B_resources)], leave=False):
                 for t in tqdm(range(game.T), leave=False):
                     # ========== PLAYER A METRICS ==========
-                    A_payoffs, A_regrets = compute_metrics(game, False, t, A_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize, track_progress=track_progress)
+                    A_payoffs, A_regrets = compute_metrics(game, False, t, A_all_decisions,
+                                                           sample_threshold=sample_threshold, chunksize=chunksize)
 
                     # ========== PLAYER B METRICS ==========
-                    B_payoffs, B_regrets = compute_metrics(game, True, t, B_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize, track_progress=track_progress)
+                    B_payoffs, B_regrets = compute_metrics(game, True, t, B_all_decisions,
+                                                           sample_threshold=sample_threshold, chunksize=chunksize)
 
