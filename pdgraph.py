@@ -1,9 +1,10 @@
-import numpy as np
+import time
 from math import comb
 from functools import partial
 import multiprocessing as mp
 
 from tqdm import tqdm
+import numpy as np
 
 
 def coordinate_to_index(coordinate: tuple[int, int], battlefields: int, N: int) -> int:
@@ -94,7 +95,7 @@ def build_adjacency_matrix(battlefields: int,
     return adj_mat
 
 
-def prune_dead_ends(adj_mat: np.ndarray, prune_unreachable=False) -> np.ndarray:
+def prune_dead_ends(adj_mat: np.ndarray, prune_unreachable: bool = False) -> np.ndarray:
     """
     Removes outgoing edges from all nodes that cannot reach the final node
     :param adj_mat: adjacency matrix representing the graph to prune
@@ -165,14 +166,14 @@ def find_subpaths_allocations(adj_mat: np.ndarray,
 def find_paths_allocations(adj_mat: np.ndarray,
                            battlefields: int,
                            N: int,
-                           track_progress=False) -> np.ndarray:
+                           track_progress: bool = False) -> np.ndarray:
     """
     Find all possible paths (decisions) through the provided DAG
     :param adj_mat: adjacency matrix representing the DAG being searched
     :param battlefields: the number of battlefields
     :param N: the number of resources available to the player
     :param track_progress: whether to use tqdm to track progress (estimated by proportion of nodes fully explored)
-                           NOTE: estimate assumes all nodes are accessible from the source node
+                     NOTE: estimate assumes all nodes are accessible from the source node
     :return: all possible allocations (paths through the DAG)
     """
     pbar = None
@@ -210,7 +211,7 @@ def allocation_by_id(id: int, battlefields: int, N: int) -> np.ndarray:
 
 
 def compute_expected_payoff_for_decision(decision: np.ndarray,
-                                         opp_decisions: list[np.ndarray],
+                                         opp_decisions: np.ndarray,
                                          win_draws: bool) -> float:
     """
     Compute the expected payoff for a given decision
@@ -227,17 +228,36 @@ def compute_expected_payoff_for_decision(decision: np.ndarray,
 def compute_expected_payoff(target_decisions: np.ndarray,
                             opp_decisions: np.ndarray,
                             win_draws: bool,
-                            chunksize=1,
-                            track_progress=False) -> float:
+                            sample_threshold: int = None,
+                            chunksize: int = 1,
+                            track_progress: bool = False) -> float:
     """
     Compute the expected payoff for a set of decisions
     :param target_decisions: set of decisions to compute the expected payoff of
     :param opp_decisions: all possible decisions the opponent can take
     :param win_draws: whether the player wins draws
+    :param sample_threshold: maximum number of operations before sampling is used to reduce the number of operations
+                       NOTE: to bring down the number of operations, whichever set has a larger sample size will have
+                             its sample size divided by 10 until the number of operations is less than the threshold
     :param chunksize: chunksize parameter for multiprocessing
     :param track_progress: whether to use tqdm to track computation progress
     :return: expected payoff of the provided set of decisions
     """
+    if sample_threshold is not None and len(target_decisions)*len(opp_decisions) > sample_threshold:
+        num_samples = np.asarray([len(target_decisions), len(opp_decisions)], dtype=np.float_)
+
+        while num_samples.prod() > sample_threshold:
+            num_samples[num_samples.argmax()] //= 10
+
+        num_samples = num_samples.astype(np.int_)
+
+        if num_samples[0] != len(target_decisions):
+            target_decisions = target_decisions[np.random.randint(len(target_decisions), size=num_samples[0])]
+
+        if num_samples[1] != len(opp_decisions):
+            opp_decisions = opp_decisions[np.random.randint(len(opp_decisions), size=num_samples[1])]
+
+
     expected_payoff = 0
 
     if track_progress:
@@ -282,16 +302,26 @@ def compute_best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws: bo
     return payoff
 
 
-def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chunksize=1, track_progress=False):
+def estimate_best_payoff(opp_decisions: np.ndarray,
+                         N: int,
+                         win_draws: bool,
+                         sample_threshold: int = None,
+                         chunksize: int = 1,
+                         track_progress: bool = False):
     """
     Computes the expected value for the best possible payoff
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
+    :param sample_threshold: maximum number of decisions before sampling is used to reduce the number of operations
     :param chunksize: chunksize parameter for multiprocessing
     :param track_progress: whether to use tqdm to track computation progress
     :return: expected value for the best possible payoff
     """
+    if sample_threshold is not None and len(opp_decisions) > sample_threshold:
+        opp_decisions = opp_decisions[np.random.randint(len(opp_decisions), size=sample_threshold)]
+
+
     with mp.Pool() as pool:
         best_payoffs = pool.imap_unordered(partial(compute_best_possible_payoff, N=N, win_draws=win_draws),
                                            opp_decisions,
@@ -300,7 +330,7 @@ def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chu
             best_payoffs = tqdm(best_payoffs,
                                 total=len(opp_decisions),
                                 unit_scale=True,
-                                miniters=len(opp_decisions) / 1e4,
+                                miniters=chunksize*100,
                                 mininterval=0.2)
 
 
@@ -309,16 +339,24 @@ def estimate_best_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chu
     return total_payoff / len(opp_decisions)
 
 
-def compute_supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, chunksize=1, track_progress=False):
+def compute_supremum_payoff(opp_decisions: np.ndarray,
+                            N: int,
+                            win_draws: bool,
+                            sample_threshold: int = None,
+                            chunksize: int = 1,
+                            track_progress: bool = False):
     """
     Computes the supremum possible payoff (i.e., the minimum best possible value for payoff)
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
+    :param sample_threshold: maximum number of decisions before sampling is used to reduce the number of operations
     :param chunksize: chunksize parameter for multiprocessing
     :param track_progress: whether to use tqdm to track computation progress
     :return: supremum payoff
     """
+    if sample_threshold is not None and len(opp_decisions) > sample_threshold:
+        opp_decisions = opp_decisions[np.random.randint(len(opp_decisions), size=sample_threshold)]
 
     with mp.Pool() as pool:
         best_payoffs = pool.imap_unordered(partial(compute_best_possible_payoff, N=N, win_draws=win_draws),
@@ -328,7 +366,7 @@ def compute_supremum_payoff(opp_decisions: np.ndarray, N: int, win_draws: bool, 
             best_payoffs = tqdm(best_payoffs,
                                 total=len(opp_decisions),
                                 unit_scale=True,
-                                miniters=len(opp_decisions) / 1e4,
+                                miniters=chunksize*100,
                                 mininterval=0.2)
 
 
@@ -359,11 +397,14 @@ def make_discrete_allocation(allocation: np.ndarray, N: int):
     return discrete
 
 
-def compute_bounds(decision: np.ndarray, result: np.ndarray, opp_resources: int, win_draws: bool) -> np.ndarray:
+def compute_bounds(decision: np.ndarray,
+                   result: np.ndarray,
+                   opp_resources: int,
+                   win_draws: bool) -> np.ndarray:
     """
     Compute the bounds on the opponent's possible allocations
     :param decision: player's allocations
-    :param result: vector of battlefields wins
+    :param result: vector of battlefield wins
     :param opp_resources: resources believed available to the opponent
     :param win_draws: whether the relevant player wins draws or not
     :return: array containing the bounds of the opponent's possible allocations
