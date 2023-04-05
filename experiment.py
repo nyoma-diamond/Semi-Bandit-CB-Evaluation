@@ -113,10 +113,9 @@ if __name__ == '__main__':
                 games[game.K][(game.A_resources, game.B_resources)].append(game)
 
     # for each tested number of battlefields
-    for K in games.keys():
+    for K in tqdm(games.keys(), leave=True):
         # for each resource matchup
-        for (A_resources, B_resources) in tqdm(games[K].keys(), leave=True):
-
+        for (A_resources, B_resources) in tqdm(games[K].keys(), leave=False):
             # build decision graphs for players
             A_graph = build_adjacency_matrix(K, A_resources)
             B_graph = build_adjacency_matrix(K, B_resources)
