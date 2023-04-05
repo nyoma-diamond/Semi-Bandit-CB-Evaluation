@@ -2,6 +2,7 @@ import glob
 import random
 import time
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from tqdm import tqdm
 import dill
@@ -22,8 +23,7 @@ def compute_metrics(t: int,
                     win_draws: bool,
                     all_decisions: np.ndarray,
                     sample_threshold=None,
-                    chunksize=1,
-                    track_progress=False):
+                    chunksize=1):
     """
     Compute metrics for a player given the game and round
     :param t: the round
@@ -34,7 +34,6 @@ def compute_metrics(t: int,
                           If this happens, consider providing a uniformly sampled subset of decisions instead.
     :param sample_threshold: maximum number of operations before sampling is used to reduce the number of operations
     :param chunksize: chunksize parameter for multiprocessing
-    :param track_progress: whether to use tqdm to track computation progress
     :return: the payoffs and regrets observed by the player this round
     """
     if win_draws:  # Player is player B (i.e., wins draws)
@@ -61,47 +60,107 @@ def compute_metrics(t: int,
     bounded_graph = build_adjacency_matrix(game.K, opp_resources, opp_bounds)
 
     # Prune nodes that lead to dead-ends
-    pruned_graph = prune_dead_ends(bounded_graph, prune_unreachable=track_progress)
+    pruned_graph = prune_dead_ends(bounded_graph)
 
     # Compute possible decisions opponent could have played
-    opp_possible_decisions = find_paths_allocations(pruned_graph, game.K, opp_resources, track_progress=track_progress)
+    opp_possible_decisions = find_paths_allocations(pruned_graph, game.K, opp_resources)
+
+
+    with ProcessPoolExecutor() as ppe:
+        # True expected payoff
+        true_expected_payoff = ppe.submit(compute_expected_payoff,
+                                          all_decisions, np.expand_dims(opp_decision, axis=0), win_draws,
+                                          sample_threshold=sample_threshold, chunksize=chunksize)
+        # Estimated expected payoff
+        est_expected_payoff = ppe.submit(compute_expected_payoff,
+                                         all_decisions, opp_possible_decisions, win_draws,
+                                         sample_threshold=sample_threshold, chunksize=chunksize)
+        # Estimated best possible payoff
+        est_best_payoff = ppe.submit(estimate_best_payoff,
+                                     opp_possible_decisions, player_resources, win_draws,
+                                     sample_threshold=sample_threshold, chunksize=chunksize)
+        # Supremum payoff
+        sup_payoff = ppe.submit(compute_supremum_payoff,
+                                opp_possible_decisions, player_resources, win_draws,
+                                sample_threshold=sample_threshold, chunksize=chunksize)
+        # True best possible payoff
+        true_best_payoff = compute_best_possible_payoff(opp_decision, player_resources, win_draws)
 
 
     payoffs = np.asarray([
-        # True expected payoff
-        compute_expected_payoff(all_decisions, np.expand_dims(opp_decision, axis=0), win_draws,
-                                sample_threshold=sample_threshold, chunksize=chunksize, track_progress=track_progress),
-        # Estimated expected payoff
-        compute_expected_payoff(all_decisions, opp_possible_decisions, win_draws,
-                                sample_threshold=sample_threshold, chunksize=chunksize, track_progress=track_progress),
-        # True best possible payoff
-        compute_best_possible_payoff(opp_decision, player_resources, win_draws),
-        # Estimated best possible payoff
-        estimate_best_payoff(opp_possible_decisions, player_resources, win_draws,
-                             sample_threshold=sample_threshold, chunksize=chunksize, track_progress=track_progress),
-        # Supremum payoff
-        compute_supremum_payoff(opp_possible_decisions, player_resources, win_draws,
-                                sample_threshold=sample_threshold, chunksize=chunksize, track_progress=track_progress)
+        true_expected_payoff.result(),
+        est_expected_payoff.result(),
+        true_best_payoff,
+        est_best_payoff.result(),
+        sup_payoff.result()
     ])
 
     regrets = payoffs - result.sum()
 
     return payoffs, regrets
 
+def process_game(game: GameData,
+                 A_all_decisions: np.ndarray,
+                 B_all_decisions: np.ndarray,
+                 sample_threshold=None,
+                 chunksize=1):
+    """
+    Process and save data for the provided game
+    NOTE: assumes the provided game is valid
+    :param game: game to process
+    :param A_all_decisions: All decisions available to player A
+    :param B_all_decisions: All decisions available to player B
+    :param sample_threshold: maximum number of operations before sampling is used to reduce the number of operations
+    :param chunksize: chunksize parameter for multiprocessing
+    """
+    # initialize payoff and regret records
+    A_payoffs, A_regrets = np.empty((0, 5)), np.empty((0, 5))
+    B_payoffs, B_regrets = np.empty((0, 5)), np.empty((0, 5))
+
+    # for each round
+    for t in range(1):
+        # compute payoff & regret metrics for player A
+        A_round_payoff, A_round_regret = compute_metrics(t, game, False, A_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize)
+        A_payoffs = np.vstack((A_payoffs, A_round_payoff))
+        A_regrets = np.vstack((A_regrets, A_round_regret))
+
+        # compute payoff & regret metrics for player B
+        B_round_payoff, B_round_regret = compute_metrics(t, game, True, B_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize)
+        B_payoffs = np.vstack((B_payoffs, B_round_payoff))
+        B_regrets = np.vstack((B_regrets, B_round_regret))
+
+    # prepare data for saving to file
+    results = np.stack(((A_payoffs, A_regrets), (B_payoffs, B_regrets)))
+
+    return game.identifier(), results
+
 
 if __name__ == '__main__':
+    # Chunk size to pass to multiprocessing
     chunksize = 64
+
+    # Operation count threshold before sampling is used
     sample_threshold = None
 
-    out_dir = rf'./results/{time.strftime("%Y-%m-%d_%H-%M-%S")}'
-    Path(out_dir).mkdir(parents=True, exist_ok=False)
+    # Maximum number of games to attempt to process in parallel
+    # NOTE: If this value is 1 then computation may spend a lot of time waiting for other processes to finish
+    #       It's a good idea to have this be at least 2 so that another game is always ready to be processed
+    # WARNING: Setting this value very high can cause system problems/crashes due to extremely large resource usage
+    #          It is recommended that this value not exceed 4 as very little benefit is gained beyond that value
+    max_parallel_games = 4
 
+    # directory to save results to
+    in_dir = r'./simulations/small/**/*'
+
+    # directory to load game data from (**/* LOADS ALL FILES IN ALL SUBDIRECTORIES OF ./simulations)
+    out_dir = rf'./results/{time.strftime("%Y-%m-%d_%H-%M-%S")}'
+
+    Path(out_dir).mkdir(parents=True, exist_ok=False)
     print(f'Saving results to {out_dir}')
 
     games = {}
 
-    # Load game data (**/* LOADS ALL FILES IN ALL SUBDIRECTORIES OF ./simulations)
-    for path in glob.glob(r'./simulations/**/*'):
+    for path in glob.glob(in_dir):
         with open(path, 'rb') as f:
             game = dill.load(f)
 
@@ -124,38 +183,22 @@ if __name__ == '__main__':
             A_all_decisions = find_paths_allocations(A_graph, K, A_resources)
             B_all_decisions = find_paths_allocations(B_graph, K, B_resources)
 
-            # for each game (algorithm matchup)
-            for game in tqdm(games[K][(A_resources, B_resources)], leave=False):
-                # something went wrong in the match and there's no data; skip
-                if not game.is_valid():
-                    continue
+            with ProcessPoolExecutor(max_workers=max_parallel_games) as ppe:
+                futures = [ppe.submit(process_game,
+                                      game, A_all_decisions, B_all_decisions,
+                                      sample_threshold=sample_threshold, chunksize=chunksize)
+                           for game in games[K][(A_resources, B_resources)] if game.is_valid()]
 
-                # initialize payoff and regret records
-                A_payoffs, A_regrets = np.empty((0, 5)), np.empty((0, 5))
-                B_payoffs, B_regrets = np.empty((0, 5)), np.empty((0, 5))
+                for future in tqdm(as_completed(futures), total=len(futures)):
+                    game_id, results = future.result()
+                    if results is not None:
+                        filename = rf'{out_dir}/{game_id}'
+                        # if a file with the desired name already exists, increment i until available
+                        if Path(rf'{filename}.npy').exists():
+                            i = 1
+                            while Path(rf'{filename}_{i}.npy').exists():
+                                i += 1
+                            filename = rf'{filename}_{i}'
 
-                # for each round
-                for t in tqdm(range(game.T), leave=False):
-                    # compute payoff & regret metrics for player A
-                    A_round_payoff, A_round_regret = compute_metrics(t, game, False, A_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize)
-                    A_payoffs = np.vstack((A_payoffs, A_round_payoff))
-                    A_regrets = np.vstack((A_regrets, A_round_regret))
-
-                    # compute payoff & regret metrics for player B
-                    B_round_payoff, B_round_regret = compute_metrics(t, game, True, B_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize)
-                    B_payoffs = np.vstack((B_payoffs, B_round_payoff))
-                    B_regrets = np.vstack((B_regrets, B_round_regret))
-
-                # prepare data for saving to file
-                results = np.stack(((A_payoffs, A_regrets), (B_payoffs, B_regrets)))
-
-                filename = rf'{out_dir}/{game.identifier()}'
-                # if a file with the desired name already exists, increment i until available
-                if Path(rf'{filename}.npy').exists():
-                    i = 1
-                    while Path(rf'{filename}_{i}.npy').exists():
-                        i += 1
-                    filename = rf'{filename}_{i}'
-
-                # save the data
-                np.save(filename, results)
+                        # save the data
+                        np.save(filename, results)
