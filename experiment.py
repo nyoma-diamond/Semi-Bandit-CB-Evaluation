@@ -118,7 +118,7 @@ def process_game(game: GameData,
     B_payoffs, B_regrets = np.empty((0, 5)), np.empty((0, 5))
 
     # for each round
-    for t in range(1):
+    for t in range(game.T):
         # compute payoff & regret metrics for player A
         A_round_payoff, A_round_regret = compute_metrics(t, game, False, A_all_decisions, sample_threshold=sample_threshold, chunksize=chunksize)
         A_payoffs = np.vstack((A_payoffs, A_round_payoff))
