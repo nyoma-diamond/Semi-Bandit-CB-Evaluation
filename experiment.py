@@ -149,10 +149,10 @@ if __name__ == '__main__':
     #          It is recommended that this value not exceed 4 as very little benefit is gained beyond that value
     max_parallel_games = 4
 
-    # directory to save results to
-    in_dir = r'./simulations/small/**/*'
+    # directory to load game data from
+    in_dir = r'./simulations/**/*'
 
-    # directory to load game data from (**/* LOADS ALL FILES IN ALL SUBDIRECTORIES OF ./simulations)
+    # directory to save results to
     out_dir = rf'./results/{time.strftime("%Y-%m-%d_%H-%M-%S")}'
 
     Path(out_dir).mkdir(parents=True, exist_ok=False)
