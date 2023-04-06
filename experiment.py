@@ -189,7 +189,7 @@ if __name__ == '__main__':
                                       sample_threshold=sample_threshold, chunksize=chunksize)
                            for game in games[K][(A_resources, B_resources)] if game.is_valid()]
 
-                for future in tqdm(as_completed(futures), total=len(futures)):
+                for future in tqdm(as_completed(futures), total=len(futures), leave=False):
                     game_id, results = future.result()
                     if results is not None:
                         filename = rf'{out_dir}/{game_id}'
