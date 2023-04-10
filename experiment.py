@@ -15,7 +15,7 @@ from game_data import GameData
 
 from pdgraph import compute_bounds
 from pdgraph import build_adjacency_matrix, find_paths_allocations, prune_dead_ends
-from pdgraph import compute_expected_payoff, estimate_best_payoff, compute_best_possible_payoff, compute_supremum_payoff
+from pdgraph import compute_expected_payoff, estimate_max_payoff, compute_max_possible_payoff, compute_supremum_payoff
 
 
 def compute_metrics(t: int,
@@ -75,23 +75,23 @@ def compute_metrics(t: int,
         est_expected_payoff = ppe.submit(compute_expected_payoff,
                                          all_decisions, opp_possible_decisions, win_draws,
                                          sample_threshold=sample_threshold, chunksize=chunksize)
-        # Estimated best possible payoff
-        est_best_payoff = ppe.submit(estimate_best_payoff,
+        # Estimated max possible payoff
+        est_max_payoff = ppe.submit(estimate_max_payoff,
                                      opp_possible_decisions, player_resources, win_draws,
                                      sample_threshold=sample_threshold, chunksize=chunksize)
         # Supremum payoff
         sup_payoff = ppe.submit(compute_supremum_payoff,
                                 opp_possible_decisions, player_resources, win_draws,
                                 sample_threshold=sample_threshold, chunksize=chunksize)
-        # True best possible payoff
-        true_best_payoff = compute_best_possible_payoff(opp_decision, player_resources, win_draws)
+        # True max possible payoff
+        true_max_payoff = compute_max_possible_payoff(opp_decision, player_resources, win_draws)
 
 
     payoffs = np.asarray([
         true_expected_payoff.result(),
         est_expected_payoff.result(),
-        true_best_payoff,
-        est_best_payoff.result(),
+        true_max_payoff,
+        est_max_payoff.result(),
         sup_payoff.result()
     ])
 

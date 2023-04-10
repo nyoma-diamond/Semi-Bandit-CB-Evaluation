@@ -278,13 +278,13 @@ def compute_expected_payoff(target_decisions: np.ndarray,
     return expected_payoff
 
 
-def compute_best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws: bool) -> int:
+def compute_max_possible_payoff(opp_decision: np.ndarray, N: int, win_draws: bool) -> int:
     """
-    Computes the best possible payoff against the provided decision
+    Computes the max possible payoff against the provided decision
     :param opp_decision: decision by opponent
     :param N: available resources
     :param win_draws: whether the player wins draws or not
-    :return: the best possible payoff
+    :return: the max possible payoff
     """
     dec = sorted(opp_decision, reverse=True)
 
@@ -301,39 +301,39 @@ def compute_best_possible_payoff(opp_decision: np.ndarray, N: int, win_draws: bo
     return payoff
 
 
-def estimate_best_payoff(opp_decisions: np.ndarray,
+def estimate_max_payoff(opp_decisions: np.ndarray,
                          N: int,
                          win_draws: bool,
                          sample_threshold: int = None,
                          chunksize: int = 1,
                          track_progress: bool = False):
     """
-    Computes the expected value for the best possible payoff
+    Computes the expected value for the max possible payoff
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
     :param sample_threshold: maximum number of decisions before sampling is used to reduce the number of operations
     :param chunksize: chunksize parameter for multiprocessing
     :param track_progress: whether to use tqdm to track computation progress
-    :return: expected value for the best possible payoff
+    :return: expected value for the max possible payoff
     """
     if sample_threshold is not None and len(opp_decisions) > sample_threshold:
         opp_decisions = opp_decisions[np.random.randint(len(opp_decisions), size=sample_threshold)]
 
 
     with mp.Pool() as pool:
-        best_payoffs = pool.imap_unordered(partial(compute_best_possible_payoff, N=N, win_draws=win_draws),
+        max_payoffs = pool.imap_unordered(partial(compute_max_possible_payoff, N=N, win_draws=win_draws),
                                            opp_decisions,
                                            chunksize=chunksize)
         if track_progress:
-            best_payoffs = tqdm(best_payoffs,
+            max_payoffs = tqdm(max_payoffs,
                                 total=len(opp_decisions),
                                 unit_scale=True,
                                 miniters=chunksize*100,
                                 mininterval=0.2)
 
 
-        total_payoff = sum(best_payoffs)
+        total_payoff = sum(max_payoffs)
 
     return total_payoff / len(opp_decisions)
 
@@ -345,7 +345,7 @@ def compute_supremum_payoff(opp_decisions: np.ndarray,
                             chunksize: int = 1,
                             track_progress: bool = False):
     """
-    Computes the supremum possible payoff (i.e., the minimum best possible value for payoff)
+    Computes the supremum possible payoff (i.e., the minimum max possible value for payoff)
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
@@ -358,18 +358,18 @@ def compute_supremum_payoff(opp_decisions: np.ndarray,
         opp_decisions = opp_decisions[np.random.randint(len(opp_decisions), size=sample_threshold)]
 
     with mp.Pool() as pool:
-        best_payoffs = pool.imap_unordered(partial(compute_best_possible_payoff, N=N, win_draws=win_draws),
+        max_payoffs = pool.imap_unordered(partial(compute_max_possible_payoff, N=N, win_draws=win_draws),
                                            opp_decisions,
                                            chunksize=chunksize)
         if track_progress:
-            best_payoffs = tqdm(best_payoffs,
+            max_payoffs = tqdm(max_payoffs,
                                 total=len(opp_decisions),
                                 unit_scale=True,
                                 miniters=chunksize*100,
                                 mininterval=0.2)
 
 
-        supremum_payoff = min(best_payoffs)
+        supremum_payoff = min(max_payoffs)
 
     return supremum_payoff
 
