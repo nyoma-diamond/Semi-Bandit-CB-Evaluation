@@ -9,7 +9,7 @@ from game_data import parse_identifier
 def update_mats(mats, payoff, regret, target_alg, opp_alg):
     fmt = '${:.2f}\\pm{:.2f}$' if get_latex else '{:.2f}±{:.2f}'
     received_payoff = payoff['True Max'] - regret['True Max']
-    mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format((received_payoff**2).mean() ** 0.5, received_payoff.std())
+    mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format(received_payoff.mean(), received_payoff.std())
 
     obs_expected_diff = payoff['Observable Expected'] - payoff['True Expected']
     mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format((obs_expected_diff**2).mean() ** 0.5, obs_expected_diff.std())
