@@ -53,7 +53,7 @@ def print_mats(mats, player, opp, T, K, target_resources, opp_resources):
 
         big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('Edge', '\\ttsc{Edge}').replace('CUCB_DRA', '\\ttsc{CUCB\\_DRA}').replace('Random_Allocation', 'Random')
 
-        # All sub-tables show mean $\\pm$ standard deviation. (a) The received payoff by player {player}. (b) The difference (i.e., error) between True Expected Payoff/Regret and Observable Expected Payoff/Regret. (c) The difference between True Max Payoff/Regret and Observable Max Payoff/Regret over the course of the game. (d) The difference between True Max Payoff/Regret and Supremum Payoff/Regret over the course of the game.
+        # All sub-tables show mean $\\pm$ standard deviation. (a) The received payoff by player {player}. (b) The difference (i.e., error) between Observable Expected Payoff/Regret and True Expected Payoff/Regret. (c) The difference between Observable Max Payoff/Regret and True Max Payoff/Regret over the course of the game. (d) The difference between Supremum Payoff/Regret and True Payoff/Regret over the course of the game. Negative values indicate an underestimation.
 
         print('\n\n%==================================================\n%==================================================\n%==================================================\n\n')
         print(big_table)
