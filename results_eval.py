@@ -29,7 +29,7 @@ def get_style(df):
     ])
 
 
-def print_mats(mats, player, opp, T, K, target_resources, opp_resources):
+def print_mats(mats, player, opp, T, K, A_resources, B_resources):
     tables = []
 
     for metric, mat in mats.items():
@@ -42,13 +42,13 @@ def print_mats(mats, player, opp, T, K, target_resources, opp_resources):
             tables.append(table_str)
         else:
             print()
-            print(player, K, target_resources, opp_resources, metric)
+            print(player, K, A_resources, B_resources, metric)
             print(mat)
 
     if get_latex:
         big_table = '\\begin{table}[htb!p]' \
                     + '\n\n\\bigskip\n'.join(tables) \
-                    + f'\n\\caption{{Empirical results focusing on player {player} (rows) vs. player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={target_resources}$, and $N_B={opp_resources}$.}}\n' \
+                    + f'\n\\caption{{Empirical results focusing on player {player} (rows) vs. player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={A_resources}$, and $N_B={B_resources}$.}}\n' \
                     + '\\end{table}'
 
         big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('CUCB_DRA', '\\ttsc{CUCB\\_DRA}').replace('Edge', '\\ttsc{Edge}').replace('Random_Allocation', 'Random').replace('-0.00\\pm','0.00\\pm')
@@ -62,7 +62,7 @@ def print_mats(mats, player, opp, T, K, target_resources, opp_resources):
 
 in_dir = r'./results/**/*.npy'
 column_order = ['True Expected', 'Observable Expected', 'True Max', 'Observable Max', 'Supremum']
-get_latex = True
+get_latex = False
 
 data = {}
 # algorithms = set()
@@ -122,4 +122,4 @@ for T in data.keys():
 
 
                 print_mats(A, 'A', 'B', T, K, A_resources, B_resources)
-                print_mats(B, 'B', 'A', T, K, B_resources, A_resources)
+                print_mats(B, 'B', 'A', T, K, A_resources, B_resources)
