@@ -308,7 +308,7 @@ def estimate_max_payoff(opp_decisions: np.ndarray,
                          chunksize: int = 1,
                          track_progress: bool = False):
     """
-    Computes the expected value for the max possible payoff
+    Computes the expected value for the max payoff (observable max payoff)
     :param opp_decisions: set of decisions possible to be played by the opponent
     :param N: resources available to the player
     :param win_draws: whether the player wins draws or not
