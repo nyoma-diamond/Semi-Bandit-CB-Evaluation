@@ -72,11 +72,11 @@ def compute_metrics(t: int,
                                           all_decisions, np.expand_dims(opp_decision, axis=0), win_draws,
                                           sample_threshold=sample_threshold, chunksize=chunksize)
         # Observable expected payoff
-        est_expected_payoff = ppe.submit(compute_expected_payoff,
+        obs_expected_payoff = ppe.submit(compute_expected_payoff,
                                          all_decisions, opp_possible_decisions, win_draws,
                                          sample_threshold=sample_threshold, chunksize=chunksize)
         # Observable max payoff
-        est_max_payoff = ppe.submit(estimate_max_payoff,
+        obs_max_payoff = ppe.submit(estimate_max_payoff,
                                      opp_possible_decisions, player_resources, win_draws,
                                      sample_threshold=sample_threshold, chunksize=chunksize)
         # Supremum payoff
@@ -89,9 +89,9 @@ def compute_metrics(t: int,
 
     payoffs = np.asarray([
         true_expected_payoff.result(),
-        est_expected_payoff.result(),
+        obs_expected_payoff.result(),
         true_max_payoff,
-        est_max_payoff.result(),
+        obs_max_payoff.result(),
         sup_payoff.result()
     ])
 
