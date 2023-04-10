@@ -7,7 +7,7 @@ import pandas as pd
 from game_data import parse_identifier
 
 def update_mats(mats, payoff, regret, target_alg, opp_alg):
-    fmt = '${:.3f}\\pm{:.3f}$' if get_latex else '{:.3f}±{:.3f}'
+    fmt = '${:.2f}\\pm{:.2f}$' if get_latex else '{:.2f}±{:.2f}'
     received_payoff = payoff['True Max'] - regret['True Max']
     mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format(received_payoff.mean(), received_payoff.std())
 
@@ -48,8 +48,12 @@ def print_mats(mats, player, opp, T, K, target_resources, opp_resources):
     if get_latex:
         big_table = '\\begin{table}[htb!p]' \
                     + '\n\n\\bigskip\n'.join(tables) \
-                    + f'\n\\caption{{Empirical results focusing on player {player} (rows) vs player {opp} (columns) for games with $T={T}$ rounds, $K={K} battlefields$, $N_A={target_resources}$ player A resources, and $N_B={opp_resources}$ player B resources. (a) The mean and standard deviation of received payoff by player {player} over the course of the game. (b) The mean and standard deviation of the difference between True Expected Payoff/Regret and Observable Expected Payoff/Regret over the course of the game. (c) The mean and standard deviation of the difference between True Max Payoff/Regret and Observable Max Payoff/Regret over the course of the game. (d) The mean and standard deviation of the difference between True Max Payoff/Regret and Supremum Payoff/Regret over the course of the game.}}\n' \
+                    + f'\n\\caption{{Empirical results focusing on player {player} (rows) vs. player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={target_resources}$, and $N_B={opp_resources}$.}}\n' \
                     + '\\end{table}'
+
+        big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('Edge', '\\ttsc{Edge}').replace('CUCB_DRA', '\\ttsc{CUCB\\_DRA}').replace('Random_Allocation', 'Random')
+
+        # All sub-tables show mean $\\pm$ standard deviation. (a) The received payoff by player {player}. (b) The difference (i.e., error) between True Expected Payoff/Regret and Observable Expected Payoff/Regret. (c) The difference between True Max Payoff/Regret and Observable Max Payoff/Regret over the course of the game. (d) The difference between True Max Payoff/Regret and Supremum Payoff/Regret over the course of the game.
 
         print('\n\n%==================================================\n%==================================================\n%==================================================\n\n')
         print(big_table)
@@ -58,10 +62,11 @@ def print_mats(mats, player, opp, T, K, target_resources, opp_resources):
 
 in_dir = r'./results/**/*.npy'
 column_order = ['True Expected', 'Observable Expected', 'True Max', 'Observable Max', 'Supremum']
-get_latex = False
+get_latex = True
 
 data = {}
-algorithms = set()
+# algorithms = set()
+algorithms = ['MARA', 'Edge', 'CUCB_DRA', 'Random_Allocation'] # hard coding for convenience
 
 for path in glob.glob(in_dir):
     game = parse_identifier(os.path.basename(path)[:-len('.npy')])
@@ -77,13 +82,13 @@ for path in glob.glob(in_dir):
     if game.A_algorithm not in data[game.T][game.K][game.A_resources][game.B_resources].keys():
         data[game.T][game.K][game.A_resources][game.B_resources][game.A_algorithm] = {}
 
-    algorithms.add(game.A_algorithm)
-    algorithms.add(game.B_algorithm)
+    # algorithms.add(game.A_algorithm)
+    # algorithms.add(game.B_algorithm)
 
     results = np.load(path)
     data[game.T][game.K][game.A_resources][game.B_resources][game.A_algorithm][game.B_algorithm] = results
 
-algorithms = list(algorithms)
+# algorithms = list(algorithms)
 
 
 for T in data.keys():
