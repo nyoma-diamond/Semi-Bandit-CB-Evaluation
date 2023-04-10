@@ -48,12 +48,10 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
     if get_latex:
         big_table = '\\begin{table}[htb!p]' \
                     + '\n\n\\bigskip\n'.join(tables) \
-                    + f'\n\\caption{{Empirical results focusing on player {player} (rows) vs. player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={A_resources}$, and $N_B={B_resources}$.}}\n' \
+                    + f'\n\\caption{{Empirical results focusing on player {player} (rows) versus player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={A_resources}$, and $N_B={B_resources}$.}}\n' \
                     + '\\end{table}'
 
         big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('CUCB_DRA', '\\ttsc{CUCB\\_DRA}').replace('Edge', '\\ttsc{Edge}').replace('Random_Allocation', 'Random').replace('-0.00\\pm','0.00\\pm')
-
-        # All sub-tables show mean $\\pm$ standard deviation. (a) The received payoff by player {player}. (b) The difference (i.e., error) between Observable Expected Payoff/Regret and True Expected Payoff/Regret. (c) The difference between Observable Max Payoff/Regret and True Max Payoff/Regret over the course of the game. (d) The difference between Supremum Payoff/Regret and True Payoff/Regret over the course of the game. Negative values indicate an underestimation.
 
         print('\n\n%==================================================\n%==================================================\n%==================================================\n\n')
         print(big_table)
