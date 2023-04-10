@@ -9,16 +9,16 @@ from game_data import parse_identifier
 def update_mats(mats, payoff, regret, target_alg, opp_alg):
     fmt = '${:.2f}\\pm{:.2f}$' if get_latex else '{:.2f}±{:.2f}'
     received_payoff = payoff['True Max'] - regret['True Max']
-    mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format(received_payoff.mean(), received_payoff.std())
+    mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format((received_payoff**2).mean() ** 0.5, received_payoff.std())
 
     obs_expected_diff = payoff['Observable Expected'] - payoff['True Expected']
-    mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(obs_expected_diff.mean(), obs_expected_diff.std())
+    mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format((obs_expected_diff**2).mean() ** 0.5, obs_expected_diff.std())
 
     obs_max_diff = payoff['Observable Max'] - payoff['True Max']
-    mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(obs_max_diff.mean(), obs_max_diff.std())
+    mats['Observable Max'].at[target_alg, opp_alg] = fmt.format((obs_max_diff**2).mean() ** 0.5, obs_max_diff.std())
 
     supremum_diff = payoff['Supremum'] - payoff['True Max']
-    mats['Supremum'].at[target_alg, opp_alg] = fmt.format(supremum_diff.mean(), supremum_diff.std())
+    mats['Supremum'].at[target_alg, opp_alg] = fmt.format((supremum_diff**2).mean() ** 0.5, supremum_diff.std())
 
 
 def get_style(df):
@@ -51,7 +51,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
                     + f'\n\\caption{{Empirical results focusing on player {player} (rows) versus player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={A_resources}$, and $N_B={B_resources}$.}}\n' \
                     + '\\end{table}'
 
-        big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('CUCB_DRA', '\\ttsc{CUCB\\_DRA}').replace('Edge', '\\ttsc{Edge}').replace('Random_Allocation', 'Random').replace('-0.00\\pm','0.00\\pm')
+        big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('CUCB_DRA', '\\ttsc{CUCB\\_DRA}').replace('Edge', '\\ttsc{Edge}').replace('Random_Allocation', 'Random')
 
         print('\n\n%==================================================\n%==================================================\n%==================================================\n\n')
         print(big_table)
