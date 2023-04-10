@@ -51,7 +51,7 @@ def print_mats(mats, player, opp, T, K, target_resources, opp_resources):
                     + f'\n\\caption{{Empirical results focusing on player {player} (rows) vs. player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={target_resources}$, and $N_B={opp_resources}$.}}\n' \
                     + '\\end{table}'
 
-        big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('Edge', '\\ttsc{Edge}').replace('CUCB_DRA', '\\ttsc{CUCB\\_DRA}').replace('Random_Allocation', 'Random').replace('-0.00\\pm','0.00\\pm')
+        big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('CUCB_DRA', '\\ttsc{CUCB\\_DRA}').replace('Edge', '\\ttsc{Edge}').replace('Random_Allocation', 'Random').replace('-0.00\\pm','0.00\\pm')
 
         # All sub-tables show mean $\\pm$ standard deviation. (a) The received payoff by player {player}. (b) The difference (i.e., error) between Observable Expected Payoff/Regret and True Expected Payoff/Regret. (c) The difference between Observable Max Payoff/Regret and True Max Payoff/Regret over the course of the game. (d) The difference between Supremum Payoff/Regret and True Payoff/Regret over the course of the game. Negative values indicate an underestimation.
 
@@ -66,7 +66,7 @@ get_latex = True
 
 data = {}
 # algorithms = set()
-algorithms = ['MARA', 'Edge', 'CUCB_DRA', 'Random_Allocation'] # hard coding for convenience
+algorithms = ['MARA', 'CUCB_DRA', 'Edge', 'Random_Allocation'] # hard coding for convenience
 
 for path in glob.glob(in_dir):
     game = parse_identifier(os.path.basename(path)[:-len('.npy')])
