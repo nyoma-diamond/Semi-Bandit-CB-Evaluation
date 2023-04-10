@@ -37,7 +37,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
             table_str = '\n\\begin{subtable}[h]{\\textwidth}\n' \
                         + '\\centering\n' \
                         + get_style(mat).to_latex(column_format='||c|cccc||') \
-                        + f'\\caption{{{metric}}}\n' \
+                        + f'\\caption{{{metric}{"" if metric == "Received Payoff" else " Payoff/Regret Error"}}}\n' \
                         + '\\end{subtable}'
             tables.append(table_str)
         else:
@@ -62,7 +62,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
 
 in_dir = r'./results/**/*.npy'
 column_order = ['True Expected', 'Observable Expected', 'True Max', 'Observable Max', 'Supremum']
-get_latex = False
+get_latex = True
 
 data = {}
 # algorithms = set()
