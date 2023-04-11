@@ -5,7 +5,6 @@ import numpy as np
 import scipy.sparse as sci
 
 from algorithms.cb_algorithm import CB_Algorithm
-from pdgraph import allocation_by_id
 
 
 class Edge(CB_Algorithm):

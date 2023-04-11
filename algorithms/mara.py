@@ -1,11 +1,10 @@
-import random
-from math import exp, sqrt, log, comb
+from math import exp, sqrt, log
 from random import choice
 
 import numpy as np
 
 from algorithms.cb_algorithm import CB_Algorithm
-from pdgraph import allocation_by_id, make_discrete_allocation
+from pdgraph import make_discrete_allocation
 
 
 class MARA(CB_Algorithm):

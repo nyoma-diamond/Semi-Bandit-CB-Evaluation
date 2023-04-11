@@ -1,10 +1,9 @@
 import math
-import random
 
 import numpy as np
 
 from algorithms.cb_algorithm import CB_Algorithm
-from pdgraph import build_adjacency_matrix, coordinate_to_index, find_paths_allocations, allocation_by_id
+from pdgraph import build_adjacency_matrix, find_paths_allocations
 
 
 class Oracle:
