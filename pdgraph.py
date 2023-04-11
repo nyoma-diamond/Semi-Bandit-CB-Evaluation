@@ -220,7 +220,7 @@ def compute_expected_payoff_for_decision(decision: np.ndarray,
     :return: the expected payoff (total available payoff if divide is False)
     """
     compare = np.greater_equal if win_draws else np.greater
-    total = sum(compare(dec, decision).sum() for dec in opp_decisions)
+    total = sum(compare(decision, opp_dec).sum() for opp_dec in opp_decisions)
     return total / len(opp_decisions)
 
 
