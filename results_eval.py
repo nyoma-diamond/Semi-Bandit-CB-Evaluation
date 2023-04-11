@@ -6,19 +6,22 @@ import pandas as pd
 
 from game_data import parse_identifier
 
-def update_mats(mats, payoff, regret, target_alg, opp_alg):
+def update_mats(mats, payoff, regret, target_alg, opp_alg, error):
     fmt = '${:.2f}\\pm{:.2f}$' if get_latex else '{:.2f}±{:.2f}'
+
+    mean = lambda arr: (arr**2).mean() ** 0.5 if error else arr.mean()
+
     received_payoff = payoff['True Max'] - regret['True Max']
     mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format(received_payoff.mean(), received_payoff.std())
 
-    obs_expected_diff = payoff['Observable Expected'] - payoff['True Expected']
-    mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format((obs_expected_diff**2).mean() ** 0.5, obs_expected_diff.std())
+    obs_expected_diff = payoff['Observable Expected'] - error*payoff['True Expected']
+    mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(mean(obs_expected_diff) ** 0.5, obs_expected_diff.std())
 
-    obs_max_diff = payoff['Observable Max'] - payoff['True Max']
-    mats['Observable Max'].at[target_alg, opp_alg] = fmt.format((obs_max_diff**2).mean() ** 0.5, obs_max_diff.std())
+    obs_max_diff = payoff['Observable Max'] - error*payoff['True Max']
+    mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(mean(obs_max_diff), obs_max_diff.std())
 
-    supremum_diff = payoff['Supremum'] - payoff['True Max']
-    mats['Supremum'].at[target_alg, opp_alg] = fmt.format((supremum_diff**2).mean() ** 0.5, supremum_diff.std())
+    supremum_diff = payoff['Supremum'] - error*payoff['True Max']
+    mats['Supremum'].at[target_alg, opp_alg] = fmt.format(mean(supremum_diff), supremum_diff.std())
 
 
 def get_style(df):
@@ -29,7 +32,7 @@ def get_style(df):
     ])
 
 
-def print_mats(mats, player, opp, T, K, A_resources, B_resources):
+def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
     tables = []
 
     for metric, mat in mats.items():
@@ -37,7 +40,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
             table_str = '\n\\begin{subtable}[h]{\\textwidth}\n' \
                         + '\\centering\n' \
                         + get_style(mat).to_latex(column_format='||c|cccc||') \
-                        + f'\\caption{{{metric}{"" if metric == "Received Payoff" else " Payoff/Regret Error"}}}\n' \
+                        + f'\\caption{{{metric}{"" if metric == "Received Payoff" else " Payoff/Regret" + (" Error" if error else "")}}}\n' \
                         + '\\end{subtable}'
             tables.append(table_str)
         else:
@@ -60,11 +63,12 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
 
 in_dir = r'./results/**/*.npy'
 column_order = ['True Expected', 'Observable Expected', 'True Max', 'Observable Max', 'Supremum']
+get_error = True
 get_latex = True
 
 data = {}
 # algorithms = set()
-algorithms = ['MARA', 'CUCB_DRA', 'Edge', 'Random_Allocation'] # hard coding for convenience
+algorithms = ['MARA', 'CUCB_DRA', 'Edge', 'Random_Allocation'] # hard coding for convenient ordering
 
 for path in glob.glob(in_dir):
     game = parse_identifier(os.path.basename(path)[:-len('.npy')])
@@ -115,9 +119,9 @@ for T in data.keys():
                         B_payoff = pd.DataFrame(results[1,0], columns=column_order)
                         B_regret = pd.DataFrame(results[1,1], columns=column_order)
 
-                        update_mats(A, A_payoff, A_regret, A_algorithm, B_algorithm)
-                        update_mats(B, B_payoff, B_regret, B_algorithm, A_algorithm)
+                        update_mats(A, A_payoff, A_regret, A_algorithm, B_algorithm, error=get_error)
+                        update_mats(B, B_payoff, B_regret, B_algorithm, A_algorithm, error=get_error)
 
 
-                print_mats(A, 'A', 'B', T, K, A_resources, B_resources)
-                print_mats(B, 'B', 'A', T, K, A_resources, B_resources)
+                print_mats(A, 'A', 'B', T, K, A_resources, B_resources, error=get_error)
+                print_mats(B, 'B', 'A', T, K, A_resources, B_resources, error=get_error)
