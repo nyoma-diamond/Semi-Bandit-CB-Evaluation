@@ -14,13 +14,13 @@ def update_mats(mats, payoff, regret, target_alg, opp_alg, error):
     received_payoff = payoff['True Max'] - regret['True Max']
     mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format(received_payoff.mean(), received_payoff.std())
 
-    obs_expected_diff = payoff['Observable Expected'] - error*payoff['True Expected']
+    obs_expected_diff = regret['Observable Expected'] - error*regret['True Expected']
     mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(mean(obs_expected_diff) ** 0.5, obs_expected_diff.std())
 
-    obs_max_diff = payoff['Observable Max'] - error*payoff['True Max']
+    obs_max_diff = regret['Observable Max'] - error*regret['True Max']
     mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(mean(obs_max_diff), obs_max_diff.std())
 
-    supremum_diff = payoff['Supremum'] - error*payoff['True Max']
+    supremum_diff = regret['Supremum'] - error*regret['True Max']
     mats['Supremum'].at[target_alg, opp_alg] = fmt.format(mean(supremum_diff), supremum_diff.std())
 
 
