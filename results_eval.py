@@ -36,6 +36,9 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
     tables = []
 
     for metric, mat in mats.items():
+        if error and metric == 'Received Payoff':
+            continue
+
         if get_latex:
             table_str = '\n\\begin{subtable}[h]{\\textwidth}\n' \
                         + '\\centering\n' \
