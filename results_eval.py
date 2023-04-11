@@ -57,7 +57,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
                     + f'\n\\caption{{Empirical results focusing on player {player} (rows) versus player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={A_resources}$, and $N_B={B_resources}$.}}\n' \
                     + '\\end{table}'
 
-        big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('CUCB_DRA', '\\ttsc{CUCB\\_DRA}').replace('Edge', '\\ttsc{Edge}').replace('Random_Allocation', 'Random')
+        big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('CUCB_DRA', '\\ttsc{CUCB-DRA}').replace('Edge', '\\ttsc{Edge}').replace('Random_Allocation', 'Random')
 
         print('\n\n%==================================================\n%==================================================\n%==================================================\n\n')
         print(big_table)
