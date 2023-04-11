@@ -40,7 +40,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
             table_str = '\n\\begin{subtable}[h]{\\textwidth}\n' \
                         + '\\centering\n' \
                         + get_style(mat).to_latex(column_format='||c|cccc||') \
-                        + f'\\caption{{{metric}{"" if metric == "Received Payoff" else " Payoff" + ("/Regret Error" if error else "")}}}\n' \
+                        + f'\\caption{{{metric}{"" if metric == "Received Payoff" else (" Payoff/Regret Error" if error else " Regret")}}}\n' \
                         + '\\end{subtable}'
             tables.append(table_str)
         else:
