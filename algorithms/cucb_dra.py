@@ -43,7 +43,6 @@ class Oracle:
         :param D: probabilities of success per unit allocated
         :return: the index of the decision providing the optimal expected reward, value of the optimal expected reward
         """
-        # TODO: supremum from possible exploration?
         expected_rewards = self.r(self.expanded_action_set, D)
         max_index = np.argmax(expected_rewards)
         return max_index, expected_rewards[max_index]
