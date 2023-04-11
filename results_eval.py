@@ -15,7 +15,7 @@ def update_mats(mats, payoff, regret, target_alg, opp_alg, error):
     mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format(received_payoff.mean(), received_payoff.std())
 
     obs_expected_diff = regret['Observable Expected'] - error*regret['True Expected']
-    mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(mean(obs_expected_diff) ** 0.5, obs_expected_diff.std())
+    mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(mean(obs_expected_diff), obs_expected_diff.std())
 
     obs_max_diff = regret['Observable Max'] - error*regret['True Max']
     mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(mean(obs_max_diff), obs_max_diff.std())
@@ -40,7 +40,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
             table_str = '\n\\begin{subtable}[h]{\\textwidth}\n' \
                         + '\\centering\n' \
                         + get_style(mat).to_latex(column_format='||c|cccc||') \
-                        + f'\\caption{{{metric}{"" if metric == "Received Payoff" else " Payoff/Regret" + (" Error" if error else "")}}}\n' \
+                        + f'\\caption{{{metric}{"" if metric == "Received Payoff" else " Payoff" + ("/Regret Error" if error else "")}}}\n' \
                         + '\\end{subtable}'
             tables.append(table_str)
         else:
@@ -63,7 +63,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
 
 in_dir = r'./results/**/*.npy'
 column_order = ['True Expected', 'Observable Expected', 'True Max', 'Observable Max', 'Supremum']
-get_error = True
+get_error = False
 get_latex = True
 
 data = {}
