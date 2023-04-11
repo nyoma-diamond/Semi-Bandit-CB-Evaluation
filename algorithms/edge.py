@@ -216,28 +216,3 @@ class Edge(CB_Algorithm):
         C = self.coocurence_mat()
         est_loss = np.asarray(loss * (np.matmul(np.linalg.pinv(C), self.bin_path(self.prev_path)))).flatten()
         self.w = self.w * np.exp(-self.eta * est_loss)
-
-
-if __name__ == '__main__':
-    battlefields = 5  # battlefields
-    resources = 15  # resources
-    opp_resources = 15
-
-    opp_num_decisions = comb(battlefields + opp_resources - 1, battlefields - 1)
-
-    player = Edge(battlefields, resources, 0.5)
-
-    for _ in range(30):
-        print()
-        allocation = player.generate_decision()
-        print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
-
-        opp_allocation = np.asarray(
-            allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
-        print('Opponent\'s allocation:', opp_allocation)
-
-        result = np.greater(allocation, opp_allocation)
-        print('Result:', result)
-        print('Payoff:', sum(result))
-
-        player.update(result)

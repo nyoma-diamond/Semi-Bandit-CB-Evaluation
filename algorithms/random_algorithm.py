@@ -34,27 +34,3 @@ class Random_Allocation(CB_Algorithm):
 
     def update(self, _: np.ndarray):
         pass
-
-
-if __name__ == '__main__':
-    battlefields = 5
-    resources = 15
-    opp_resources = 20
-
-    player = Random_Allocation(battlefields, resources)
-
-    opp_num_decisions = comb(battlefields + opp_resources - 1, battlefields - 1)
-
-    for _ in range(20):
-        print()
-        allocation = player.generate_decision()
-        print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
-
-        opp_allocation = np.asarray(allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources))
-        print('Opponent\'s allocation:', opp_allocation)
-
-        result = np.greater(allocation, opp_allocation)
-        print('Result:', result)
-        print('Payoff:', sum(result))
-
-        player.update(result)

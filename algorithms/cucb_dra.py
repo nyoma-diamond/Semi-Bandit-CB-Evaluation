@@ -100,27 +100,3 @@ class CUCB_DRA(CB_Algorithm):
         mu_hat_ka = self.mu_hat[np.arange(decision.size), decision]
 
         self.mu_hat[np.arange(decision.size), decision] = mu_hat_ka - (reward - mu_hat_ka) / T_ka
-
-
-if __name__ == '__main__':
-    battlefields = 5
-    resources = 15
-    opp_resources = 20
-
-    opp_num_decisions = math.comb(battlefields + opp_resources - 1, battlefields - 1)
-
-    player = CUCB_DRA(battlefields, resources)
-
-    for _ in range(20):
-        print()
-        allocation = player.generate_decision()
-        print(f'Player\'s allocation: {allocation} (total: {sum(allocation)})')
-
-        opp_allocation = allocation_by_id(random.randint(0, opp_num_decisions - 1), battlefields, opp_resources)
-        print('Opponent\'s allocation:', opp_allocation)
-
-        result = np.greater(allocation, opp_allocation)
-        print('Result:', result)
-        print('Payoff:', sum(result))
-
-        player.update(result)
