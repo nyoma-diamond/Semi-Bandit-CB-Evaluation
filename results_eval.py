@@ -33,11 +33,11 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
 
         if get_latex:
             caption = metric
-            if metric == "Received Payoff":
-            elif error:
-                caption += " Payoff/Regret Error"
-            else:
-                caption += " Regret"
+            if metric != "Received Payoff":
+                if error:
+                    caption += " Payoff/Regret Error"
+                else:
+                    caption += " Regret"
             table_str = mat.style.to_latex(column_format='rcccc',
                                            environment='subtable',
                                            position='h',
