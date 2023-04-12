@@ -24,14 +24,6 @@ def update_mats(mats, payoff, regret, target_alg, opp_alg, error):
     mats['Supremum'].at[target_alg, opp_alg] = fmt.format(mean(supremum_diff), supremum_diff.std())
 
 
-def get_style(df):
-    return df.style.set_table_styles([
-        {'selector': 'toprule', 'props': ':hline;'},
-        {'selector': 'midrule', 'props': ':hline;'},
-        {'selector': 'bottomrule', 'props': ':hline;'}
-    ])
-
-
 def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
     tables = []
 
@@ -42,7 +34,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
         if get_latex:
             table_str = '\n\\begin{subtable}[h]{\\textwidth}\n' \
                         + '\\centering\n' \
-                        + get_style(mat).to_latex(column_format='||c|cccc||') \
+                        + mat.to_latex(column_format='ccccc', escape=False) \
                         + f'\\caption{{{metric}{"" if metric == "Received Payoff" else (" Payoff/Regret Error" if error else " Regret")}}}\n' \
                         + '\\end{subtable}'
             tables.append(table_str)
