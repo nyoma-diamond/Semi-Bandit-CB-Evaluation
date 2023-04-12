@@ -32,11 +32,18 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
             continue
 
         if get_latex:
-            table_str = '\n\\begin{subtable}[h]{\\textwidth}\n' \
-                        + '\\centering\n' \
-                        + mat.to_latex(column_format='ccccc', escape=False) \
-                        + f'\\caption*{{{metric}{"" if metric == "Received Payoff" else (" Payoff/Regret Error" if error else " Regret")}}}\n' \
-                        + '\\end{subtable}'
+            caption = metric
+            if metric == "Received Payoff":
+                if error:
+                    caption += " Payoff/Regret Error"
+                else:
+                    caption += " Regret"
+            table_str = mat.style.to_latex(column_format='rcccc',
+                                           environment='subtable',
+                                           position='h',
+                                           position_float='centering',
+                                           hrules=True,
+                                           caption=caption)
             tables.append(table_str)
         else:
             print()
@@ -44,12 +51,16 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
             print(mat)
 
     if get_latex:
-        big_table = '\\begin{table}[htb!p]' \
-                    + '\n\n\\bigskip\n'.join(tables) \
+        big_table = '\\begin{table}[htb!p]\n' \
+                    + '\n\\bigskip\n\n'.join(tables) \
                     + f'\n\\caption*{{Empirical results focusing on player {player} (rows) versus player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={A_resources}$, and $N_B={B_resources}$.}}\n' \
                     + '\\end{table}'
 
-        big_table = big_table.replace('MARA', '\\ttsc{MARA}').replace('CUCB_DRA', '\\ttsc{CUCB-DRA}').replace('Edge', '\\ttsc{Edge}').replace('Random_Allocation', 'Random')
+        big_table = big_table.replace('MARA', '\\ttsc{MARA}')\
+            .replace('CUCB_DRA', '\\ttsc{CUCB-DRA}')\
+            .replace('Edge', '\\ttsc{Edge}')\
+            .replace('Random_Allocation', 'Random') \
+            .replace('[h]', '[h]{\\textwidth}')
 
         print('\n\n%==================================================\n%==================================================\n%==================================================\n\n')
         print(big_table)
