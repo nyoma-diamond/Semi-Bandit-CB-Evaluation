@@ -1,43 +1,59 @@
 import glob
 import os
+from enum import Enum
 
 import numpy as np
 import pandas as pd
 
 from game_data import parse_identifier
 
-def update_mats(mats, payoff, regret, target_alg, opp_alg, error):
-    fmt = '${:.2f}\\pm{:.2f}$' if get_latex else '{:.2f}±{:.2f}'
-
-    mean = lambda arr: (arr**2).mean() ** 0.5 if error else arr.mean()
-
-    received_payoff = payoff['True Max'] - regret['True Max']
-    mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format(received_payoff.mean(), received_payoff.std())
-
-    obs_expected_diff = regret['Observable Expected'] - error*regret['True Expected']
-    mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(mean(obs_expected_diff), obs_expected_diff.std())
-
-    obs_max_diff = regret['Observable Max'] - error*regret['True Max']
-    mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(mean(obs_max_diff), obs_max_diff.std())
-
-    supremum_diff = regret['Supremum'] - error*regret['True Max']
-    mats['Supremum'].at[target_alg, opp_alg] = fmt.format(mean(supremum_diff), supremum_diff.std())
+class Measure(Enum):
+    RAW = ''
+    ERROR = ' Payoff/Regret Error'
+    CORRELATION = ' Payoff/Regret Correlation'
 
 
-def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
+def update_mats(mats, payoff, regret, target_alg, opp_alg):
+    fmt = '{:.2f}'
+    if measure != Measure.CORRELATION:
+        fmt += '\\pm' if get_latex else '±'
+        fmt += '{:.2f}'
+    if get_latex:
+        fmt = f'${fmt}$'
+
+    if measure == Measure.RAW:
+        received_payoff = payoff['True Max'] - regret['True Max']
+        mats['Received Payoff'].at[target_alg, opp_alg] = fmt.format(received_payoff.mean(), received_payoff.std())
+        mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(regret['Observable Expected'].mean(), regret['Observable Expected'].std())
+        mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(regret['Observable Max'].mean(), regret['Observable Max'].std())
+        mats['Supremum'].at[target_alg, opp_alg] = fmt.format(regret['Supremum'].mean(), regret['Supremum'].std())
+    elif measure == Measure.ERROR:
+        df = pd.DataFrame()
+        df['Observable Expected'] = regret['Observable Expected'] - regret['True Expected']
+        df['Observable Max'] = regret['Observable Max'] - regret['True Max']
+        df['Supremum'] = regret['Supremum'] - regret['True Max']
+
+        mean = lambda s: (s**2).mean() ** 0.5
+
+        mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(mean(df['Observable Expected']), df['Observable Expected'].std())
+        mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(mean(df['Observable Max']), df['Observable Max'].std())
+        mats['Supremum'].at[target_alg, opp_alg] = fmt.format(mean(df['Supremum']), df['Supremum'].std())
+    elif measure == Measure.CORRELATION:
+        mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(regret['Observable Expected'].corr(regret['True Expected']))
+        mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(regret['Observable Max'].corr(regret['True Max']))
+        mats['Supremum'].at[target_alg, opp_alg] = fmt.format(regret['Supremum'].corr(regret['True Max']))
+
+
+
+def print_mats(mats, player, opp, T, K, A_resources, B_resources):
     tables = []
 
     for metric, mat in mats.items():
-        if error and metric == 'Received Payoff':
+        if measure != Measure.RAW and metric == 'Received Payoff':
             continue
 
         if get_latex:
-            caption = metric
-            if metric != "Received Payoff":
-                if error:
-                    caption += " Payoff/Regret Error"
-                else:
-                    caption += " Regret"
+            caption = metric + measure.value
             table_str = mat.style.to_latex(column_format='rcccc',
                                            environment='subtable',
                                            position='h',
@@ -69,7 +85,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources, error):
 
 in_dir = r'./results/**/*.npy'
 column_order = ['True Expected', 'Observable Expected', 'True Max', 'Observable Max', 'Supremum']
-get_error = True
+measure = Measure.CORRELATION
 get_latex = True
 
 data = {}
@@ -125,9 +141,9 @@ for T in data.keys():
                         B_payoff = pd.DataFrame(results[1,0], columns=column_order)
                         B_regret = pd.DataFrame(results[1,1], columns=column_order)
 
-                        update_mats(A, A_payoff, A_regret, A_algorithm, B_algorithm, error=get_error)
-                        update_mats(B, B_payoff, B_regret, B_algorithm, A_algorithm, error=get_error)
+                        update_mats(A, A_payoff, A_regret, A_algorithm, B_algorithm)
+                        update_mats(B, B_payoff, B_regret, B_algorithm, A_algorithm)
 
 
-                print_mats(A, 'A', 'B', T, K, A_resources, B_resources, error=get_error)
-                print_mats(B, 'B', 'A', T, K, A_resources, B_resources, error=get_error)
+                print_mats(A, 'A', 'B', T, K, A_resources, B_resources)
+                print_mats(B, 'B', 'A', T, K, A_resources, B_resources)
