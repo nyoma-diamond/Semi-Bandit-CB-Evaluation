@@ -69,7 +69,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
     if get_latex:
         big_table = '\\begin{table}[htb!p]\n' \
                     + '\n\\bigskip\n\n'.join(tables) \
-                    + f'\n\\caption*{{Empirical results focusing on player {player} (rows) versus player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={A_resources}$, and $N_B={B_resources}$.}}\n' \
+                    + f'\\caption*{{Empirical results focusing on player {player} (rows) versus player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={A_resources}$, and $N_B={B_resources}$.}}\n' \
                     + '\\end{table}'
 
         big_table = big_table.replace('MARA', '\\ttsc{MARA}')\
