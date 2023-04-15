@@ -10,12 +10,13 @@ from game_data import parse_identifier
 class Measure(Enum):
     RAW = ''
     ERROR = ' Payoff/Regret Error'
-    CORRELATION = ' Regret Correlation'
+    REG_CORRELATION = ' Regret Correlation'
+    PAY_CORRELATION = ' Payoff Correlation'
 
 
 def update_mats(mats, payoff, regret, target_alg, opp_alg):
     fmt = '{:.2f}'
-    if measure != Measure.CORRELATION:
+    if measure not in [Measure.REG_CORRELATION, Measure.PAY_CORRELATION]:
         fmt += '\\pm' if get_latex else '±'
         fmt += '{:.2f}'
     if get_latex:
@@ -38,10 +39,14 @@ def update_mats(mats, payoff, regret, target_alg, opp_alg):
         mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(mean(df['Observable Expected']), df['Observable Expected'].std())
         mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(mean(df['Observable Max']), df['Observable Max'].std())
         mats['Supremum'].at[target_alg, opp_alg] = fmt.format(mean(df['Supremum']), df['Supremum'].std())
-    elif measure == Measure.CORRELATION:
+    elif measure == Measure.REG_CORRELATION:
         mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(regret['Observable Expected'].corr(regret['True Expected']))
         mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(regret['Observable Max'].corr(regret['True Max']))
         mats['Supremum'].at[target_alg, opp_alg] = fmt.format(regret['Supremum'].corr(regret['True Max']))
+    elif measure == Measure.PAY_CORRELATION:
+        mats['Observable Expected'].at[target_alg, opp_alg] = fmt.format(payoff['Observable Expected'].corr(payoff['True Expected']))
+        mats['Observable Max'].at[target_alg, opp_alg] = fmt.format(payoff['Observable Max'].corr(payoff['True Max']))
+        mats['Supremum'].at[target_alg, opp_alg] = fmt.format(payoff['Supremum'].corr(payoff['True Max']))
 
 
 
@@ -76,6 +81,8 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
             .replace('CUCB_DRA', '\\ttsc{CUCB-DRA}')\
             .replace('Edge', '\\ttsc{Edge}')\
             .replace('Random_Allocation', 'Random') \
+            .replace('$nan$', '-') \
+            .replace('-0.00', '0.00') \
             .replace('[h]', '[h]{\\textwidth}')
 
         print('\n\n%==================================================\n%==================================================\n%==================================================\n\n')
@@ -85,7 +92,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
 
 in_dir = r'./results/**/*.npy'
 column_order = ['True Expected', 'Observable Expected', 'True Max', 'Observable Max', 'Supremum']
-measure = Measure.CORRELATION
+measure = Measure.PAY_CORRELATION
 get_latex = True
 
 data = {}
