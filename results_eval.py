@@ -10,7 +10,7 @@ from game_data import parse_identifier
 class Measure(Enum):
     RAW = ''
     ERROR = ' Payoff/Regret Error'
-    CORRELATION = ' Payoff/Regret Correlation'
+    CORRELATION = ' Regret Correlation'
 
 
 def update_mats(mats, payoff, regret, target_alg, opp_alg):
