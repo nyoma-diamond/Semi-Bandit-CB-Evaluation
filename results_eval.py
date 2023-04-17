@@ -77,9 +77,9 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
                     + f'\\caption*{{Empirical results focusing on player {player} (rows) versus player {opp} (columns) for games with $T={T}$, $K={K}$, $N_A={A_resources}$, and $N_B={B_resources}$.}}\n' \
                     + '\\end{table}'
 
-        big_table = big_table.replace('MARA', '\\ttsc{MARA}')\
-            .replace('CUCB_DRA', '\\ttsc{CUCB-DRA}')\
-            .replace('Edge', '\\ttsc{Edge}')\
+        big_table = big_table.replace('MARA', '\\ttsc{MARA}') \
+            .replace('CUCB_DRA', '\\ttsc{CUCB-DRA}') \
+            .replace('Edge', '\\ttsc{Edge}') \
             .replace('Random_Allocation', 'Random') \
             .replace('$nan$', '-') \
             .replace('[h]', '[h]{\\textwidth}')
