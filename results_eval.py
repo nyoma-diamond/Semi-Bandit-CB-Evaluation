@@ -82,7 +82,6 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
             .replace('Edge', '\\ttsc{Edge}')\
             .replace('Random_Allocation', 'Random') \
             .replace('$nan$', '-') \
-            .replace('-0.00', '0.00') \
             .replace('[h]', '[h]{\\textwidth}')
 
         print('\n\n%==================================================\n%==================================================\n%==================================================\n\n')
