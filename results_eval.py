@@ -59,7 +59,7 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
 
         if get_latex:
             caption = metric + measure.value
-            table_str = mat.style.to_latex(column_format='rcccc',
+            table_str = mat.style.to_latex(column_format=f'r{"c"*len(algorithms)}',
                                            environment='subtable',
                                            position='h',
                                            position_float='centering',
@@ -90,10 +90,11 @@ def print_mats(mats, player, opp, T, K, A_resources, B_resources):
 
 
 in_dir = r'./results/**/*.npy'
-column_order = ['True Expected', 'Observable Expected', 'True Max', 'Observable Max', 'Supremum']
-measure = Measure.PAY_CORRELATION
-get_latex = True
+measure = Measure.RAW
+get_latex = False
 
+
+column_order = ['True Expected', 'Observable Expected', 'True Max', 'Observable Max', 'Supremum']
 data = {}
 # algorithms = set()
 algorithms = ['MARA', 'CUCB_DRA', 'Edge', 'Random_Allocation'] # hard coding for convenient ordering

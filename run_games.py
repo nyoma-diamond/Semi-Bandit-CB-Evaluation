@@ -90,8 +90,8 @@ def game_worker(args: tuple, T: int) -> GameData:
 
 if __name__ == '__main__':
     battlefields = [5]
-    resources = [10, 15, 20]
-    T = 100
+    resources = [15, 20]
+    T = 1000
 
     algorithms = {
         MARA: dict(c=2.5),

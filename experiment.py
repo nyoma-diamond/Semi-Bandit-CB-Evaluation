@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
     # Maximum number of games to attempt to process in parallel
     # NOTE: If this value is 1 then computation may spend a lot of time waiting for other processes to finish
-    #       It's a good idea to have this be at least 2 so that another game is always ready to be processed
+    #       It is a good idea to have this be at least 2 so that another game is always ready to be processed
     # WARNING: Setting this value very high can cause system problems/crashes due to extremely large resource usage
     #          It is recommended that this value not exceed 4 as very little benefit is gained beyond that value
     max_parallel_games = 4
